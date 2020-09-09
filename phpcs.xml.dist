@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<ruleset name="Phalcon PSR-12">
+    <description>Phalcon Coding Standards</description>
+    <arg value="-colors"/>
+    <arg value="s"/>
+    <arg value="p"/>
+    <rule ref="PSR12"/>
+
+    <file>src/</file>
+</ruleset>
