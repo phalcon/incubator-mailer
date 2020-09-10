@@ -23,32 +23,5 @@ final class ManagerTest extends Unit
     {
         $class = $this->createMock(Manager::class);
         $this->assertInstanceOf(Injectable::class, $class);
-//        $config = [
-//            'driver'     => 'smtp',
-//            'host'       => '127.0.0.1',
-//            'port'       => 25,
-//            'username'   => 'example@gmail.com',
-//            'password'   => 'your_password',
-//            'from'       => [
-//                'email' => 'example@gmail.com',
-//                'name'  => 'YOUR FROM NAME',
-//            ],
-//        ];
-//
-//        $mailer = new Manager($config);
-//
-//        $message = $mailer->createMessage()
-//            ->to('example_to@gmail.com', 'OPTIONAL NAME')
-//            ->subject('Hello world!')
-//            ->content('Hello world!');
-//
-//// Set the Cc addresses of this message.
-//        $message->cc('example_cc@gmail.com');
-//
-//// Set the Bcc addresses of this message.
-//        $message->bcc('example_bcc@gmail.com');
-//
-//// Send message
-//        $message->send();
     }
 }
