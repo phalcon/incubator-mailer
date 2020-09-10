@@ -21,12 +21,13 @@ use Phalcon\Incubator\Mailer\Message;
 final class ManagerCest
 {
     private $mailer;
+    private $config;
 
     public function __construct()
     {
         $di = new DI();
 
-        $config = [
+        $this->config = [
             'driver'     => 'smtp',
             'host'       => '127.0.0.1',
             'port'       => getenv('DATA_MAILHOG_PORT'),
@@ -35,20 +36,22 @@ final class ManagerCest
             'from'       => [
                 'email' => 'example@gmail.com',
                 'name'  => 'YOUR FROM NAME',
-            ],
+            ]
         ];
 
-        $this->mailer = new Manager($config);
+        $this->mailer = new Manager($this->config);
     }
 
     public function mailerManagerSendMessage(FunctionalTester $I)
     {
+        $to = 'example_to@gmail.com';
         $message = $this->mailer->createMessage()
-            ->to('example_to@gmail.com')
+            ->to($to)
             ->subject('Hello world!')
             ->content('Hello world!');
 
         $message->send();
+
 
         $opts = array(
             'http'=>array(
@@ -60,8 +63,18 @@ final class ManagerCest
           
           $context = stream_context_create($opts);
           
-          // Accès à un fichier HTTP avec les entêtes HTTP indiqués ci-dessus
-          $file = file_get_contents('http://127.0.0.1:'.getenv('DATA_MAILHOG_CHECK_PORT').'/api/v1/messages', false, $context);
-          var_dump($file);die;
+          // Get all mail send in the MailHog SMTP
+          $baseUrl = 'http://127.0.0.1:'.getenv('DATA_MAILHOG_CHECK_PORT').'/api/v1/';
+          $dataMail = file_get_contents($sBaseUrl . 'messages', false, $context);
+          $dataMail = \json_decode($dataMail);
+          
+          //Check that there are one mail send
+          $I->assertCount($dataMail, 1);
+
+          $mail = end($dataMail);
+
+          $I->assertEquals($mail->From->Mailbox . '@' . $mail->From->Domain, $this->config['from']);
+          $I->assertEquals($mail->To->Mailbox . '@' . $mail->To->Domain, $to);
+        
     }
 }
