@@ -69,7 +69,7 @@ final class ManagerCest
           $dataMail = \json_decode($dataMail);
           
           //Check that there are one mail send
-          $I->assertCount($dataMail, 1);
+          $I->assertCount(1, $dataMail);
 
           $mail = end($dataMail);
 
