@@ -39,10 +39,15 @@ final class ManagerCest
         ];
 
         $this->mailer = new Manager($config);
+    }
 
+    public function sendMail()
+    {
         $message = $this->mailer->createMessage()
-            ->to('example_to@gmail.com', 'OPTIONAL NAME')
+            ->to('example_to@gmail.com')
             ->subject('Hello world!')
             ->content('Hello world!');
+
+        $message->send();
     }
 }
