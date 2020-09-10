@@ -29,7 +29,7 @@ final class ManagerCest
         $config = [
             'driver'     => 'smtp',
             'host'       => '127.0.0.1',
-            'port'       => 25,
+            'port'       => env('DATA_MAILHOG_PORT'),
             'username'   => 'example@gmail.com',
             'password'   => 'your_password',
             'from'       => [

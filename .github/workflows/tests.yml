@@ -3,6 +3,11 @@ name: "Tests"
 on: [push, pull_request]
 
 jobs:
+  services:
+    mailhog:
+      image: mailhog/mailhog:v1.0.0
+      ports:
+        - 8025
   run-tests:
     name: PHP ${{ matrix.php-versions }}
     runs-on: ubuntu-latest
@@ -53,6 +58,8 @@ jobs:
         run: composer install --prefer-dist --no-suggest
 
       - name: Run test suites
+        env:
+          DATA_MAILHOG_PORT: ${{ job.services.mailhog.ports['8025'] }}
         if: success()
         run: vendor/bin/codecept run --coverage-xml=coverage-${{ matrix.php-versions }}.xml
 

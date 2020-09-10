@@ -31,12 +31,12 @@ class Message
     /**
      * content type of PLAIN text.
      */
-    const CONTENT_TYPE_PLAIN = 'text/plain';
+    public const CONTENT_TYPE_PLAIN = 'text/plain';
 
     /**
      * content type HTML text.
      */
-    const CONTENT_TYPE_HTML = 'text/html';
+    public const CONTENT_TYPE_HTML = 'text/html';
 
     /**
      * @var \Phalcon\Incubator\Mailer\Manager
