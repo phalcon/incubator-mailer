@@ -3,12 +3,12 @@ name: "Tests"
 on: [push, pull_request]
 
 jobs:
-  services:
-    mailhog:
-      image: mailhog/mailhog:v1.0.0
-      ports:
-        - 8025
   run-tests:
+    services:
+      mailhog:
+        image: mailhog/mailhog:v1.0.0
+        ports:
+          - 8025
     name: PHP ${{ matrix.php-versions }}
     runs-on: ubuntu-latest
     env:
