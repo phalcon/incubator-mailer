@@ -61,7 +61,7 @@ final class ManagerCest
           $context = stream_context_create($opts);
           
           // Accès à un fichier HTTP avec les entêtes HTTP indiqués ci-dessus
-          $file = file_get_contents('http://127.0.0.1:'.getenv('DATA_MAILHOG_PORT').'/api/v1/messages', false, $context);
+          $file = file_get_contents('http://127.0.0.1:'.getenv('DATA_MAILHOG_CHECK_PORT').'/api/v1/messages', false, $context);
           var_dump($file);die;
     }
 }
