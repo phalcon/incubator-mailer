@@ -73,7 +73,7 @@ final class ManagerCest
 
           $mail = end($dataMail);
 
-          $I->assertEquals($mail->From->Mailbox . '@' . $mail->From->Domain, $this->config['from']);
+          $I->assertEquals($mail->From->Mailbox . '@' . $mail->From->Domain, $this->config['from']['email']);
           $I->assertEquals($mail->To->Mailbox . '@' . $mail->To->Domain, $to);
         
     }
