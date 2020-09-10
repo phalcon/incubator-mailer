@@ -41,7 +41,7 @@ final class ManagerCest
         $this->mailer = new Manager($config);
     }
 
-    public function mailerManagerSendMessage(IntegrationTester $I)
+    public function mailerManagerSendMessage(FunctionalTester $I)
     {
         $message = $this->mailer->createMessage()
             ->to('example_to@gmail.com')
