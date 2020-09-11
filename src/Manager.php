@@ -95,7 +95,7 @@ class Manager extends Injectable implements EventsAwareInterface
      * - mailer:beforeCreateMessage
      * - mailer:afterCreateMessage
      *
-     * @return \Phalcon\Incubator\Mailer\Message
+     * @return Message
      */
     public function createMessage()
     {
@@ -139,7 +139,7 @@ class Manager extends Injectable implements EventsAwareInterface
      * @param array $params         optional
      * @param null|string $viewsDir optional
      *
-     * @return \Phalcon\Incubator\Mailer\Message
+     * @return Message
      *
      * @see \Phalcon\Mailer\Manager::createMessage()
      */

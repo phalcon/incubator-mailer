@@ -25,8 +25,11 @@ final class ManagerSMTPCest
     public function __construct()
     {
         $di = new DI();
+    }
 
-        $this->config = [
+    public function mailerManagerCreateMessage(FunctionalTester $I)
+    {
+        $config = [
             'driver'     => 'smtp',
             'host'       => '127.0.0.1',
             'port'       => getenv('DATA_MAILHOG_PORT'),
@@ -38,15 +41,11 @@ final class ManagerSMTPCest
             ]
         ];
 
-    }
-
-    public function mailerManagerCreateMessage(FunctionalTester $I)
-    {
         $to      = 'example_to@gmail.com';
         $subject = 'Hello World';
         $body    = 'Lorem Ipsum';
 
-        $mailer = new Manager($this->config);
+        $mailer = new Manager($config);
         
         $message = $mailer->createMessage()
             ->to($to)
@@ -55,18 +54,17 @@ final class ManagerSMTPCest
 
         $message->send();
 
-        $opts = array(
-            'http'=>array(
-              'method'=>"GET",
-              'header'=>"Accept-language: en\r\n" .
-                        "Cookie: foo=bar\r\n"
-            )
-          );
+        $opts = [
+            'http' => [
+              'method' => 'GET',
+              'header' => 'Accept-language: en\r\n'
+            ]
+        ];
           
         $context = stream_context_create($opts);
         
         // Get all mail send in the MailHog SMTP
-        $baseUrl = 'http://127.0.0.1:'.getenv('DATA_MAILHOG_CHECK_PORT').'/api/v1/';
+        $baseUrl = 'http://127.0.0.1:' . getenv('DATA_MAILHOG_CHECK_PORT') . '/api/v1/';
         $dataMail = file_get_contents($baseUrl . 'messages', false, $context);
         $dataMail = \json_decode($dataMail);
         
@@ -85,19 +83,29 @@ final class ManagerSMTPCest
         $I->assertEquals($mailTo, $to);
 
         $I->assertEquals($mail->Content->Body, $body);
-        $I->assertStringContainsString('Subject: '.$subject, $mail->Raw->Data);
+        $I->assertStringContainsString('Subject: ' . $subject, $mail->Raw->Data);
     }
 
     public function mailerManagerCreateMessageFromView(FunctionalTester $I)
     {
         /**
          * Global viewsDir for current instance Mailer\Manager.
-         * 
-         * This parameter is OPTIONAL, If it is not specified, 
+         *
+         * This parameter is OPTIONAL, If it is not specified,
          * use DI from view service (getViewsDir)
          */
-        $config = clone $this->config;
-        $config['viewsDir'] = codecept_data_dir() . '/fixtures/views/';
+        $config = [
+            'driver'     => 'smtp',
+            'host'       => '127.0.0.1',
+            'port'       => getenv('DATA_MAILHOG_PORT'),
+            'username'   => 'example@gmail.com',
+            'password'   => 'your_password',
+            'from'       => [
+                'email' => 'example@gmail.com',
+                'name'  => 'YOUR FROM NAME',
+            ],
+            'viewsDir'   => codecept_data_dir() . '/fixtures/views/'
+        ];
 
         $mailer = new Manager($config);
 
@@ -105,7 +113,7 @@ final class ManagerSMTPCest
         $viewPath = 'email/signup';
 
         // Set variables to views (OPTIONAL)
-        $params = [ 
+        $params = [
             'var1' => 'VAR VALUE 1',
             'var2' => 'VAR VALUE 2',
         ];
@@ -122,9 +130,9 @@ final class ManagerSMTPCest
         $message->send();
         
         $opts = array(
-            'http'=>array(
-              'method'=>"GET",
-              'header'=>"Accept-language: en\r\n" .
+            'http' => array(
+              'method' => "GET",
+              'header' => "Accept-language: en\r\n" .
                         "Cookie: foo=bar\r\n"
             )
           );
@@ -132,7 +140,7 @@ final class ManagerSMTPCest
         $context = stream_context_create($opts);
         
         // Get all mail send in the MailHog SMTP
-        $baseUrl = 'http://127.0.0.1:'.getenv('DATA_MAILHOG_CHECK_PORT').'/api/v1/';
+        $baseUrl = 'http://127.0.0.1:' . getenv('DATA_MAILHOG_CHECK_PORT') . '/api/v1/';
         $dataMail = file_get_contents($baseUrl . 'messages', false, $context);
         $dataMail = \json_decode($dataMail);
         
@@ -151,6 +159,6 @@ final class ManagerSMTPCest
         $I->assertEquals($mailTo, $to);
 
         $I->assertEquals($mail->Content->Body, $body);
-        $I->assertStringContainsString('Subject: '.$subject, $mail->Raw->Data);
+        $I->assertStringContainsString('Subject: ' . $subject, $mail->Raw->Data);
     }
 }

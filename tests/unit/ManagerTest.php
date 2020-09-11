@@ -24,24 +24,4 @@ final class ManagerTest extends Unit
         $class = $this->createMock(Manager::class);
         $this->assertInstanceOf(Injectable::class, $class);
     }
-
-    public function testGetSetConfig(): void{
-        $config = [
-            'driver'     => 'smtp',
-            'host'       => '127.0.0.1',
-            'port'       => getenv('DATA_MAILHOG_PORT'),
-            'username'   => 'example@gmail.com',
-            'password'   => 'your_password',
-            'from'       => [
-                'email' => 'example@gmail.com',
-                'name'  => 'YOUR FROM NAME'
-            ]
-        ];
-
-        $mailer = new Manager($this->config);
-
-        $I->assertEquals($mailer->getConfig(), $config);
-
-        $I->assertEquals($mailer->getConfig('driver'), $config['driver']);
-    }
 }
