@@ -73,15 +73,15 @@ final class ManagerCest
 
           $mail = end($dataMail);
 
-          print_r($mail['From']);
-          print_r($mail['To']);
-
+          print_r($mail);
         
-          $mailhogFrom = $mail['From']['Mailbox'] . '@' . $mail['From']['Domain'];
-          $mailhogTo   = $mail['To']['Mailbox'] . '@' . $mail['To']['Domain'];
+          $mailFromData = end($mail->From);
+          $mailToData   = end($mail->To);
+          
+          $mailFrom = $mailFromData->Mailbox . '@' . $mailFromData->Domain;
+          $mailTo   = $mailToData->Mailbox . '@' . $mailToData->Domain;
 
-          $I->assertEquals($mailhogFrom, $this->config['from']['email']);
-          $I->assertEquals($mailhogTo, $to);
-        
+          $I->assertEquals($mailFrom, $this->config['from']['email']);
+          $I->assertEquals($mailTo, $to);
     }
 }
