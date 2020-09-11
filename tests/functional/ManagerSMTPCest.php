@@ -20,7 +20,6 @@ use Phalcon\Incubator\Mailer\Message;
 
 final class ManagerSMTPCest
 {
-    private $mailer;
     private $config;
 
     public function __construct()
@@ -39,7 +38,6 @@ final class ManagerSMTPCest
             ]
         ];
 
-        $this->mailer = new Manager($this->config);
     }
 
     public function mailerManagerCreateMessage(FunctionalTester $I)
@@ -47,14 +45,15 @@ final class ManagerSMTPCest
         $to      = 'example_to@gmail.com';
         $subject = 'Hello World';
         $body    = 'Lorem Ipsum';
+
+        $mailer = new Manager($this->config);
         
-        $message = $this->mailer->createMessage()
+        $message = $mailer->createMessage()
             ->to($to)
             ->subject($subject)
             ->content($body);
 
         $message->send();
-
 
         $opts = array(
             'http'=>array(
@@ -97,9 +96,10 @@ final class ManagerSMTPCest
          * This parameter is OPTIONAL, If it is not specified, 
          * use DI from view service (getViewsDir)
          */
-        $this->config['viewsDir'] = codecept_data_dir() . '/fixtures/views/';
+        $config = clone $this->config;
+        $config['viewsDir'] = codecept_data_dir() . '/fixtures/views/';
 
-        $mailer = new \Phalcon\Mailer\Manager($config);
+        $mailer = new Manager($config);
 
         // view relative to the folder viewsDir (REQUIRED)
         $viewPath = 'email/signup';
