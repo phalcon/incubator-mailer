@@ -102,6 +102,8 @@ final class ManagerSMTPCest
         // view relative to the folder viewsDir (REQUIRED)
         $viewPath = 'mail/signup';
 
+        echo file_get_contents(codecept_data_dir() . 'fixtures/views/'.$viewPath);
+
         // Set variables to views (OPTIONAL)
         $params = [
             'var1' => 'VAR VALUE 1',
