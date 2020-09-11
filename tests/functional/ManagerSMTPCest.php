@@ -43,9 +43,6 @@ final class ManagerSMTPCest
         $di->setShared('view', function () {
             $view = new Simple();
             $view->setViewsDir(codecept_data_dir() . 'fixtures/views/');
-            $view->registerEngines([
-                '.volt' => 'volt',
-            ]);
 
             return $view;
         });
