@@ -44,11 +44,14 @@ final class ManagerCest
 
     public function mailerManagerSendMessage(FunctionalTester $I)
     {
-        $to = 'example_to@gmail.com';
+        $to      = 'example_to@gmail.com';
+        $subject = 'Hello World';
+        $body    = 'Lorem Ipsum';
+        
         $message = $this->mailer->createMessage()
             ->to($to)
-            ->subject('Hello world!')
-            ->content('Hello world!');
+            ->subject($subject)
+            ->content($body);
 
         $message->send();
 
@@ -73,17 +76,16 @@ final class ManagerCest
 
           $mail = end($dataMail);
         
-          $mailFromData = end($mail->From);
+          $mailFromData = $mail->From;
           $mailToData   = end($mail->To);
-
-          var_dump($mail);
-          var_dump($mailFromData);
-          var_dump($mailToData);
           
           $mailFrom = $mailFromData->Mailbox . '@' . $mailFromData->Domain;
           $mailTo   = $mailToData->Mailbox . '@' . $mailToData->Domain;
 
           $I->assertEquals($mailFrom, $this->config['from']['email']);
           $I->assertEquals($mailTo, $to);
+
+          $I->assertEquals($mail->Content->Body, $body);
+          $I->assertStringContainsString('Subject: '.$subject, $mail->Raw->Data);
     }
 }
