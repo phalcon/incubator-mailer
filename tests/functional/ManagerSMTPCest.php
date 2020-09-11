@@ -103,7 +103,7 @@ final class ManagerSMTPCest
         $mailer = new Manager($this->config);
 
         // view relative to the folder viewsDir (REQUIRED)
-        $viewPath = 'mail/signup';
+        $viewPath = 'mail/signup.volt';
 
         // Set variables to views (OPTIONAL)
         $params = [
