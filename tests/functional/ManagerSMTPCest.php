@@ -42,7 +42,7 @@ final class ManagerSMTPCest
 
         $di->setShared('view', function () {
             $view = new Simple();
-            $view->setViewsDir(codecept_data_dir() . '/fixtures/views/');
+            $view->setViewsDir(codecept_data_dir() . 'fixtures/views/');
             $view->registerEngines([
                 '.volt' => 'volt',
             ]);
@@ -103,7 +103,7 @@ final class ManagerSMTPCest
         $mailer = new Manager($this->config);
 
         // view relative to the folder viewsDir (REQUIRED)
-        $viewPath = 'email/signup';
+        $viewPath = 'mail/signup';
 
         // Set variables to views (OPTIONAL)
         $params = [
@@ -121,14 +121,13 @@ final class ManagerSMTPCest
                 ->to($to)
                 ->subject($subject);
         $message->send();
-        
-        $opts = array(
-            'http' => array(
-              'method' => "GET",
-              'header' => "Accept-language: en\r\n" .
-                        "Cookie: foo=bar\r\n"
-            )
-          );
+
+        $opts = [
+            'http' => [
+                'method' => 'GET',
+                'header' => 'Accept-language: en\r\n'
+            ]
+        ];
           
         $context = stream_context_create($opts);
         
