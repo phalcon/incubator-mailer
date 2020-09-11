@@ -100,7 +100,7 @@ final class ManagerSMTPCest
         $mailer = new Manager($this->config);
 
         // view relative to the folder viewsDir (REQUIRED)
-        $viewPath = 'mail/signup';
+        $viewPath = 'mail/signup.volt';
 
         echo file_get_contents(codecept_data_dir() . 'fixtures/views/'.$viewPath);
 
