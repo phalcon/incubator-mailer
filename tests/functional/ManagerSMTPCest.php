@@ -16,8 +16,9 @@ namespace Phalcon\Incubator\Mailer\Tests\Functional\Manager;
 use FunctionalTester;
 use Phalcon\Incubator\Mailer\Manager;
 use Phalcon\Di\FactoryDefault as DI;
-use Phalcon\Incubator\Mailer\Message;
-use Phalcon\Mvc\View\Simple;
+use Phalcon\Mvc\View;
+use Phalcon\Mvc\View\Engine\Volt as VoltEngine;
+use Phalcon\Mvc\View\Engine\Php as PhpEngine;
 
 final class ManagerSMTPCest
 {
@@ -41,11 +42,29 @@ final class ManagerSMTPCest
         ];
 
         $di->setShared('view', function () {
-            $view = new Simple();
+            $view = new View();
+            $view->setDI($this);
             $view->setViewsDir(codecept_data_dir() . 'fixtures/views/');
+
+            $view->registerEngines([
+                '.volt'  => function ($view) {
+
+                    $volt = new VoltEngine($view, $this);
+
+                    $volt->setOptions([
+                        'path'      => codecept_output_dir(),
+                        'separator' => '_'
+                    ]);
+
+                    return $volt;
+                },
+                '.phtml' => PhpEngine::class
+
+            ]);
 
             return $view;
         });
+
     }
 
     public function mailerManagerCreateMessage(FunctionalTester $I)
@@ -101,8 +120,6 @@ final class ManagerSMTPCest
 
         // view relative to the folder viewsDir (REQUIRED)
         $viewPath = 'mail/signup.volt';
-
-        echo file_get_contents(codecept_data_dir() . 'fixtures/views/'.$viewPath);
 
         // Set variables to views (OPTIONAL)
         $params = [
