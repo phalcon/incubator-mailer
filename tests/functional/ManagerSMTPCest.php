@@ -17,6 +17,7 @@ use FunctionalTester;
 use Phalcon\Incubator\Mailer\Manager;
 use Phalcon\Di\FactoryDefault as DI;
 use Phalcon\Incubator\Mailer\Message;
+use Phalcon\Mvc\View\Simple;
 
 final class ManagerSMTPCest
 {
@@ -25,11 +26,8 @@ final class ManagerSMTPCest
     public function __construct()
     {
         $di = new DI();
-    }
 
-    public function mailerManagerCreateMessage(FunctionalTester $I)
-    {
-        $config = [
+        $this->config = [
             'driver'     => 'smtp',
             'host'       => '127.0.0.1',
             'port'       => getenv('DATA_MAILHOG_PORT'),
@@ -38,14 +36,28 @@ final class ManagerSMTPCest
             'from'       => [
                 'email' => 'example@gmail.com',
                 'name'  => 'YOUR FROM NAME',
-            ]
+            ],
+            //'viewsDir'   => codecept_data_dir() . '/fixtures/views/'
         ];
 
+        $di->setShared('view', function () {
+            $view = new Simple();
+            $view->setViewsDir(codecept_data_dir() . '/fixtures/views/');
+            $view->registerEngines([
+                '.volt' => 'volt',
+            ]);
+
+            return $view;
+        });
+    }
+
+    public function mailerManagerCreateMessage(FunctionalTester $I)
+    {
         $to      = 'example_to@gmail.com';
         $subject = 'Hello World';
         $body    = 'Lorem Ipsum';
 
-        $mailer = new Manager($config);
+        $mailer = new Manager($this->config);
         
         $message = $mailer->createMessage()
             ->to($to)
@@ -88,26 +100,7 @@ final class ManagerSMTPCest
 
     public function mailerManagerCreateMessageFromView(FunctionalTester $I)
     {
-        /**
-         * Global viewsDir for current instance Mailer\Manager.
-         *
-         * This parameter is OPTIONAL, If it is not specified,
-         * use DI from view service (getViewsDir)
-         */
-        $config = [
-            'driver'     => 'smtp',
-            'host'       => '127.0.0.1',
-            'port'       => getenv('DATA_MAILHOG_PORT'),
-            'username'   => 'example@gmail.com',
-            'password'   => 'your_password',
-            'from'       => [
-                'email' => 'example@gmail.com',
-                'name'  => 'YOUR FROM NAME',
-            ],
-            'viewsDir'   => codecept_data_dir() . '/fixtures/views/'
-        ];
-
-        $mailer = new Manager($config);
+        $mailer = new Manager($this->config);
 
         // view relative to the folder viewsDir (REQUIRED)
         $viewPath = 'email/signup';
