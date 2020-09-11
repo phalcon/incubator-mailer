@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Phalcon\Incubator\Mailer\Tests\Functional\Manager;
 
 use FunctionalTester;
+use Phalcon\Helper\Str;
 use Phalcon\Incubator\Mailer\Manager;
 use Phalcon\Di\FactoryDefault as DI;
 use Phalcon\Mvc\View;
@@ -44,7 +45,9 @@ final class ManagerSMTPCest
         $di->setShared('view', function () {
             $view = new View();
             $view->setDI($this);
-            $view->setViewsDir( '../_data/fixtures/views/');
+            $view->setViewsDir( Str::dirSeparator(
+                codecept_data_dir() . 'fixtures/views'
+            ));
 
             $view->registerEngines([
                 '.volt'  => function ($view) {
