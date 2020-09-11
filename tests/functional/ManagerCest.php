@@ -66,17 +66,22 @@ final class ManagerCest
           // Get all mail send in the MailHog SMTP
           $baseUrl = 'http://127.0.0.1:'.getenv('DATA_MAILHOG_CHECK_PORT').'/api/v1/';
           $dataMail = file_get_contents($baseUrl . 'messages', false, $context);
-          $dataMail = \json_decode($dataMail);
+          $dataMail = \json_decode($dataMail, true);
           
           //Check that there are one mail send
           $I->assertCount(1, $dataMail);
 
           $mail = end($dataMail);
 
-          print_r($mail);
+          print_r($mail['From']);
+          print_r($mail['To']);
 
-          $I->assertEquals($mail->From->Mailbox . '@' . $mail->From->Domain, $this->config['from']['email']);
-          $I->assertEquals($mail->To->Mailbox . '@' . $mail->To->Domain, $to);
+        
+          $mailhogFrom = $mail['From']['Mailbox'] . '@' . $mail['From']['Domain'];
+          $mailhogTo   = $mail['To']['Mailbox'] . '@' . $mail['To']['Domain'];
+
+          $I->assertEquals($mailhogFrom, $this->config['from']['email']);
+          $I->assertEquals($mailhogTo, $to);
         
     }
 }
