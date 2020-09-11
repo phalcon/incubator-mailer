@@ -75,6 +75,10 @@ final class ManagerCest
         
           $mailFromData = end($mail->From);
           $mailToData   = end($mail->To);
+
+          var_dump($mail);
+          var_dump($mailFromData);
+          var_dump($mailToData);
           
           $mailFrom = $mailFromData->Mailbox . '@' . $mailFromData->Domain;
           $mailTo   = $mailToData->Mailbox . '@' . $mailToData->Domain;
