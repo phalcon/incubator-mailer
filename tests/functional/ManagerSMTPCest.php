@@ -165,7 +165,7 @@ final class ManagerSMTPCest
         $I->assertEquals($mailFrom, $this->config['from']['email']);
         $I->assertEquals($mailTo, $to);
 
-        $body = $this->di->getView()->render($viewPath, $params);
+        $body = $this->di->get('\Phalcon\Mvc\View\Simple')->render($viewPath, $params);
 
         $I->assertEquals($mail->Content->Body, $body);
         $I->assertStringContainsString('Subject: ' . $subject, $mail->Raw->Data);
