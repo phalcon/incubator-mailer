@@ -66,8 +66,8 @@ jobs:
 
       - name: Run test suites
         env:
-          DATA_MAILHOG_PORT: ${{ job.services.mailhog.ports['1025'] }}
-          DATA_MAILHOG_CHECK_PORT: ${{ job.services.mailhog.ports['8025'] }}
+          DATA_MAILHOG_SMTP_PORT: ${{ job.services.mailhog.ports['1025'] }}
+          DATA_MAILHOG_API_PORT: ${{ job.services.mailhog.ports['8025'] }}
         if: success()
         run: vendor/bin/codecept run --coverage-xml=coverage-${{ matrix.php-versions }}.xml
 

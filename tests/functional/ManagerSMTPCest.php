@@ -31,7 +31,7 @@ final class ManagerSMTPCest
 
         $this->config = [
             'driver'     => 'smtp',
-            'host'       => '127.0.0.1',
+            'host'       => getenv('DATA_MAILHOG_HOST'),
             'port'       => getenv('DATA_MAILHOG_SMTP_PORT'),
             'username'   => 'example@gmail.com',
             'password'   => 'your_password',
