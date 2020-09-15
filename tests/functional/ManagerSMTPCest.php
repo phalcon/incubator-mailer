@@ -23,12 +23,11 @@ use Phalcon\Mvc\View\Engine\Php as PhpEngine;
 
 final class ManagerSMTPCest
 {
-    private $config;
-    private $baseUrl;
+    private $config, $baseUrl, $di;
 
     public function __construct()
     {
-        $di = new DI();
+        $this->di = new DI();
 
         $this->config = [
             'driver'     => 'smtp',
@@ -43,7 +42,7 @@ final class ManagerSMTPCest
             //'viewsDir'   => codecept_data_dir() . '/fixtures/views/'
         ];
 
-        $di->setShared('view', function () {
+        $this->di->setShared('view', function () {
             $view = new View();
             $view->setDI($this);
             $view->setViewsDir(Str::dirSeparator(
@@ -166,7 +165,7 @@ final class ManagerSMTPCest
         $I->assertEquals($mailFrom, $this->config['from']['email']);
         $I->assertEquals($mailTo, $to);
 
-        $body = $this->getView()->render($viewPath, $params);
+        $body = $this->di->getView()->render($viewPath, $params);
 
         $I->assertEquals($mail->Content->Body, $body);
         $I->assertStringContainsString('Subject: ' . $subject, $mail->Raw->Data);
