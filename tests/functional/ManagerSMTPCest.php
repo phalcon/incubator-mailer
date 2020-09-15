@@ -24,6 +24,7 @@ use Phalcon\Mvc\View\Engine\Php as PhpEngine;
 final class ManagerSMTPCest
 {
     private $config;
+    private $baseUrl;
 
     public function __construct()
     {
@@ -45,7 +46,7 @@ final class ManagerSMTPCest
         $di->setShared('view', function () {
             $view = new View();
             $view->setDI($this);
-            $view->setViewsDir( Str::dirSeparator(
+            $view->setViewsDir(Str::dirSeparator(
                 codecept_data_dir() . 'fixtures/views'
             ));
 
@@ -68,6 +69,7 @@ final class ManagerSMTPCest
             return $view;
         });
 
+        $this->baseUrl = getenv('DATA_MAILHOG_HOST') . ':' . getenv('DATA_MAILHOG_API_PORT') . '/api/v1/';
     }
 
     public function mailerManagerCreateMessage(FunctionalTester $I)
@@ -95,8 +97,7 @@ final class ManagerSMTPCest
         $context = stream_context_create($opts);
         
         // Get all mail send in the MailHog SMTP
-        $baseUrl = 'http://127.0.0.1:' . getenv('DATA_MAILHOG_CHECK_PORT') . '/api/v1/';
-        $dataMail = file_get_contents($baseUrl . 'messages', false, $context);
+        $dataMail = file_get_contents($this->baseUrl . 'messages', false, $context);
         $dataMail = \json_decode($dataMail);
         
         //Check that there are one mail send
@@ -130,9 +131,6 @@ final class ManagerSMTPCest
             'var2' => 'VAR VALUE 2',
         ];
 
-        $body = '<b>' . strtoupper($params['var1']) . '</b>
-        <b>' . strtoupper($params['var2']) . '</b>';
-
         $to      = 'example_to@gmail.com';
         $subject = 'Hello World';
 
@@ -151,8 +149,7 @@ final class ManagerSMTPCest
         $context = stream_context_create($opts);
         
         // Get all mail send in the MailHog SMTP
-        $baseUrl = 'http://127.0.0.1:' . getenv('DATA_MAILHOG_CHECK_PORT') . '/api/v1/';
-        $dataMail = file_get_contents($baseUrl . 'messages', false, $context);
+        $dataMail = file_get_contents($this->baseUrl . 'messages', false, $context);
         $dataMail = \json_decode($dataMail);
         
         //Check that there are one mail send
@@ -168,6 +165,8 @@ final class ManagerSMTPCest
 
         $I->assertEquals($mailFrom, $this->config['from']['email']);
         $I->assertEquals($mailTo, $to);
+
+        $body = $this->getView()->render($viewPath, $params);
 
         $I->assertEquals($mail->Content->Body, $body);
         $I->assertStringContainsString('Subject: ' . $subject, $mail->Raw->Data);
