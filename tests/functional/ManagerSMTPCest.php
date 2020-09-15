@@ -20,6 +20,7 @@ use Phalcon\Di\FactoryDefault as DI;
 use Phalcon\Mvc\View;
 use Phalcon\Mvc\View\Engine\Volt as VoltEngine;
 use Phalcon\Mvc\View\Engine\Php as PhpEngine;
+use Phalcon\Mvc\View\Simple;
 
 final class ManagerSMTPCest
 {
@@ -41,6 +42,20 @@ final class ManagerSMTPCest
             ],
             //'viewsDir'   => codecept_data_dir() . '/fixtures/views/'
         ];
+
+        $this->di->set(
+            'simple',
+            function () {
+                $view = new Simple();
+
+                $view->setViewsDir(Str::dirSeparator(
+                    codecept_data_dir() . 'fixtures/views'
+                ));
+
+                return $view;
+            },
+            true
+        );
 
         $this->di->setShared('view', function () {
             $view = new View();
@@ -165,7 +180,7 @@ final class ManagerSMTPCest
         $I->assertEquals($mailFrom, $this->config['from']['email']);
         $I->assertEquals($mailTo, $to);
 
-        $body = $this->di->get('\Phalcon\Mvc\View\Simple')->render($viewPath, $params);
+        $body = $this->di->get('simple')->render($viewPath, $params);
 
         $I->assertEquals($mail->Content->Body, $body);
         $I->assertStringContainsString('Subject: ' . $subject, $mail->Raw->Data);
