@@ -59,6 +59,11 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-suggest
 
+      - name: Setup Tests
+        run: |
+          cp tests/_ci/.env.default .env
+          vendor/bin/codecept build
+
       - name: Run test suites
         env:
           DATA_MAILHOG_PORT: ${{ job.services.mailhog.ports['1025'] }}
