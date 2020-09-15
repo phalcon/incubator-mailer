@@ -29,17 +29,13 @@ final class ManagerSMTPCest
     {
         $this->di = new DI();
 
-        var_dump(getenv('DATA_MAILHOG_HOST'));
-        var_dump(getenv('DATA_MAILHOG_SMTP_PORT'));
-        var_dump(getenv('DATA_MAILHOG_API_PORT'));die;
-
         $this->config = [
-            'driver'     => 'smtp',
-            'host'       => getenv('DATA_MAILHOG_HOST'),
-            'port'       => getenv('DATA_MAILHOG_SMTP_PORT'),
-            'username'   => 'example@gmail.com',
-            'password'   => 'your_password',
-            'from'       => [
+            'driver'   => 'smtp',
+            'host'     => getenv('DATA_MAILHOG_HOST_URI'),
+            'port'     => getenv('DATA_MAILHOG_SMTP_PORT'),
+            'username' => 'example@gmail.com',
+            'password' => 'your_password',
+            'from'     => [
                 'email' => 'example@gmail.com',
                 'name'  => 'YOUR FROM NAME',
             ],
@@ -72,7 +68,7 @@ final class ManagerSMTPCest
             return $view;
         });
 
-        $this->baseUrl = getenv('DATA_MAILHOG_HOST') . ':' . getenv('DATA_MAILHOG_API_PORT') . '/api/v1/';
+        $this->baseUrl = sprintf("%s%s:%s/api/v1/", getenv('DATA_MAILHOG_HOST_PROTOCOL'), getenv('DATA_MAILHOG_HOST_URI'), getenv('DATA_MAILHOG_API_PORT'));
     }
 
     public function mailerManagerCreateMessage(FunctionalTester $I)
@@ -82,7 +78,7 @@ final class ManagerSMTPCest
         $body    = 'Lorem Ipsum';
 
         $mailer = new Manager($this->config);
-        
+
         $message = $mailer->createMessage()
             ->to($to)
             ->subject($subject)
@@ -92,25 +88,25 @@ final class ManagerSMTPCest
 
         $opts = [
             'http' => [
-              'method' => 'GET',
-              'header' => 'Accept-language: en\r\n'
+                'method' => 'GET',
+                'header' => 'Accept-language: en\r\n'
             ]
         ];
-          
+
         $context = stream_context_create($opts);
-        
+
         // Get all mail send in the MailHog SMTP
         $dataMail = file_get_contents($this->baseUrl . 'messages', false, $context);
         $dataMail = \json_decode($dataMail);
-        
+
         //Check that there are one mail send
         $I->assertCount(1, $dataMail);
 
         $mail = end($dataMail);
-    
+
         $mailFromData = $mail->From;
         $mailToData   = end($mail->To);
-        
+
         $mailFrom = $mailFromData->Mailbox . '@' . $mailFromData->Domain;
         $mailTo   = $mailToData->Mailbox . '@' . $mailToData->Domain;
 
@@ -138,8 +134,8 @@ final class ManagerSMTPCest
         $subject = 'Hello World';
 
         $message = $mailer->createMessageFromView($viewPath, $params)
-                ->to($to)
-                ->subject($subject);
+            ->to($to)
+            ->subject($subject);
         $message->send();
 
         $opts = [
@@ -148,21 +144,21 @@ final class ManagerSMTPCest
                 'header' => 'Accept-language: en\r\n'
             ]
         ];
-          
+
         $context = stream_context_create($opts);
-        
+
         // Get all mail send in the MailHog SMTP
         $dataMail = file_get_contents($this->baseUrl . 'messages', false, $context);
         $dataMail = \json_decode($dataMail);
-        
+
         //Check that there are one mail send
         $I->assertCount(2, $dataMail);
 
         $mail = $dataMail[0];
-    
+
         $mailFromData = $mail->From;
         $mailToData   = end($mail->To);
-        
+
         $mailFrom = $mailFromData->Mailbox . '@' . $mailFromData->Domain;
         $mailTo   = $mailToData->Mailbox . '@' . $mailToData->Domain;
 
