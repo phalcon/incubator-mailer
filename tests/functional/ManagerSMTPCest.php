@@ -29,6 +29,10 @@ final class ManagerSMTPCest
     {
         $this->di = new DI();
 
+        var_dump(getenv('DATA_MAILHOG_HOST'));
+        var_dump(getenv('DATA_MAILHOG_SMTP_PORT'));
+        var_dump(getenv('DATA_MAILHOG_API_PORT'));die;
+
         $this->config = [
             'driver'     => 'smtp',
             'host'       => getenv('DATA_MAILHOG_HOST'),
