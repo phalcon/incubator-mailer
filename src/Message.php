@@ -519,7 +519,7 @@ class Message
      *
      * @param string $format
      *
-     * @return string
+     * @return Message
      *
      * @see \Swift_Message::setFormat()
      */
@@ -608,7 +608,7 @@ class Message
      */
     public function embedData($data, $name, $contentType = null)
     {
-        $embed = $this->createEmbedViaData($data, $name, $contentType);
+        $embed = $this->createEmbedViaData($data, $name);
 
         return $this->getMessage()->embed($embed);
     }
@@ -628,9 +628,9 @@ class Message
     }
 
     /**
-     * Return a {@link \Phalcon\Mailer\Manager} instance
+     * Return a {@link \Phalcon\Incubator\Mailer\Manager} instance
      *
-     * @return \Phalcon\Mailer\Manager
+     * @return \Phalcon\Incubator\Mailer\Manager
      */
     public function getManager()
     {
@@ -652,7 +652,7 @@ class Message
      * - mailer:beforeSend
      * - mailer:afterSend
      *
-     * @return int
+     * @return int | bool
      *
      * @see \Swift_Mailer::send()
      */
