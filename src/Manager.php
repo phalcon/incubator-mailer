@@ -105,7 +105,7 @@ class Manager extends Injectable implements EventsAwareInterface
             $eventsManager->fire('mailer:beforeCreateMessage', $this);
         }
 
-        /** @var $message Message */
+        /** @var Message $message */
         $message = $this->getDI()->get(
             '\Phalcon\Incubator\Mailer\Message',
             [
@@ -256,7 +256,7 @@ class Manager extends Injectable implements EventsAwareInterface
     {
         $config = $this->getConfig();
 
-        /** @var $transport \Swift_SmtpTransport: */
+        /** @var \Swift_SmtpTransport $transport */
         $transport = $this->getDI()->get('\Swift_SmtpTransport')
             ->setHost($config['host'])
             ->setPort($config['port']);
@@ -340,7 +340,7 @@ class Manager extends Injectable implements EventsAwareInterface
      */
     protected function registerTransportSendmail()
     {
-        /** @var $transport \Swift_SendmailTransport */
+        /** @var \Swift_SendmailTransport $transport */
         $transport = $this->getDI()->get('\Swift_SendmailTransport')
             ->setCommand($this->getConfig('sendmail', '/usr/sbin/sendmail -bs'));
 
@@ -396,14 +396,14 @@ class Manager extends Injectable implements EventsAwareInterface
     protected function getView()
     {
         if (!$this->view) {
-            /** @var $viewApp \Phalcon\Mvc\View */
+            /** @var \Phalcon\Mvc\View $viewApp */
             $viewApp = $this->getDI()->get('view');
 
             if (!($viewsDir = $this->getConfig('viewsDir'))) {
                 $viewsDir = $viewApp->getViewsDir();
             }
 
-            /** @var $view \Phalcon\Mvc\View\Simple */
+            /** @var \Phalcon\Mvc\View\Simple $view */
             $view = $this->getDI()->get('\Phalcon\Mvc\View\Simple');
             $view->setViewsDir($viewsDir);
 

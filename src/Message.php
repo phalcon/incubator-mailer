@@ -753,7 +753,7 @@ class Message
      */
     protected function createAttachmentViaPath($file)
     {
-        /** @var $byteStream \Swift_ByteStream_FileByteStream */
+        /** @var \Swift_ByteStream_FileByteStream $byteStream */
         $byteStream = $this->getManager()->getDI()->get(
             '\Swift_ByteStream_FileByteStream',
             [
@@ -761,7 +761,7 @@ class Message
             ]
         );
 
-        /** @var $image \Swift_Attachment */
+        /** @var \Swift_Attachment $image */
         $attachment = $this->getManager()->getDI()->get('\Swift_Attachment')
             ->setFile($byteStream);
 
@@ -800,7 +800,7 @@ class Message
      */
     protected function createEmbedViaPath($file)
     {
-        /** @var $byteStream \Swift_ByteStream_FileByteStream */
+        /** @var \Swift_ByteStream_FileByteStream $byteStream */
         $byteStream = $this->getManager()->getDI()->get(
             '\Swift_ByteStream_FileByteStream',
             [
@@ -808,7 +808,7 @@ class Message
             ]
         );
 
-        /** @var $image \Swift_Image */
+        /** @var \Swift_Image $image */
         $image = $this->getManager()->getDI()->get('\Swift_Image')
             ->setFile($byteStream);
 
