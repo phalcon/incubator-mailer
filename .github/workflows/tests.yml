@@ -70,6 +70,7 @@ jobs:
           mkdir -p "$HOME/bin"
           wget -O "$HOME/bin/mhsendmail" https://github.com/mailhog/mhsendmail/releases/download/v0.2.0/mhsendmail_linux_amd64
           chmod +x "$HOME/bin/mhsendmail"
+          php -i
           echo 'sendmail_path = $HOME/bin/mhsendmail --smtp-addr="localhost:${{ job.services.mailhog.ports['1025'] }}"' > sudo tee "$(php -i | grep 'Loaded Configuration File:' | grep -oE '/.*')"
 
       - name: Setup Tests
