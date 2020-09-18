@@ -237,15 +237,14 @@ class Manager extends Injectable implements EventsAwareInterface
                 break;
 
             default:
-                if(is_string($driver)){
+                if (is_string($driver)) {
                     throw new \InvalidArgumentException(
                         sprintf(
                             'Driver-mail "%s" is not supported',
                             $driver
                         )
                     );
-                }
-                else if(is_array($driver)){
+                } elseif (is_array($driver)) {
                     throw new \InvalidArgumentException(
                         sprintf(
                             'Driver-mail "%s" is not supported',
@@ -253,7 +252,6 @@ class Manager extends Injectable implements EventsAwareInterface
                         )
                     );
                 }
-
         }
     }
 
@@ -271,11 +269,11 @@ class Manager extends Injectable implements EventsAwareInterface
         /** @var \Swift_SmtpTransport $transport */
         $transport = $this->getDI()->get('\Swift_SmtpTransport');
 
-        if(isset($config['host'])){
+        if (isset($config['host'])) {
             $transport->setHost($config['host']);
         }
 
-        if(isset($config['port'])){
+        if (isset($config['port'])) {
             $transport->setHost($config['port']);
         }
 
@@ -424,7 +422,7 @@ class Manager extends Injectable implements EventsAwareInterface
             /** @var \Phalcon\Mvc\View\Simple $view */
             $view = $this->getDI()->get('\Phalcon\Mvc\View\Simple');
 
-            if(is_string($viewsDir)){
+            if (is_string($viewsDir)) {
                 $view->setViewsDir($viewsDir);
             }
 

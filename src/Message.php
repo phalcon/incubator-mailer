@@ -266,8 +266,7 @@ class Message
     {
         $emails = $this->normalizeEmail($email);
 
-        foreach($emails as $email)
-        {
+        foreach ($emails as $email) {
             $this->getMessage()->setSender($email, $name);
         }
 
@@ -851,7 +850,6 @@ class Message
         $emails = [];
 
         if (is_array($email) || $email instanceof \Traversable) {
-
             foreach ($email as $k => $v) {
                 if (is_int($k)) {
                     $emails[$k] = $this->getManager()->normalizeEmail($v);
