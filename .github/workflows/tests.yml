@@ -43,7 +43,7 @@ jobs:
         with:
           php-version: ${{ matrix.php-versions }}
           extensions: ${{ env.extensions }}
-          ini-values: sendmail_path = $HOME/bin/mhsendmail --smtp-addr mailhog:${{ job.services.mailhog.ports['1025'] }}
+          ini-values: sendmail_path = "$HOME/bin/mhsendmail --smtp-addr=\"mailhog:${{ job.services.mailhog.ports['1025'] }}\""
           tools: pecl
 
       - name: Get Composer Cache Directory
