@@ -274,7 +274,7 @@ class Manager extends Injectable implements EventsAwareInterface
         }
 
         if (isset($config['port'])) {
-            $transport->setHost($config['port']);
+            $transport->setPort($config['port']);
         }
 
         if (isset($config['encryption'])) {

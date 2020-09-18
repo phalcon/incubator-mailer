@@ -41,7 +41,6 @@ final class ManagerSMTPCest
                 'name'  => 'YOUR FROM NAME',
             ],
         ];
-        echo getenv('DATA_MAILHOG_HOST_URI') . getenv('DATA_MAILHOG_SMTP_PORT');
 
         $this->di->set(
             'simple',
