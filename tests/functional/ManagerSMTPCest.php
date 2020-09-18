@@ -24,7 +24,9 @@ use Phalcon\Mvc\View\Simple;
 
 final class ManagerSMTPCest
 {
-    private $config, $baseUrl, $di;
+    private array $config;
+    private string $baseUrl;
+    private DI $di;
 
     public function __construct()
     {

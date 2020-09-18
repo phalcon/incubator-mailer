@@ -113,7 +113,8 @@ class Manager extends Injectable implements EventsAwareInterface
             ]
         );
 
-        if (($from = $this->getConfig('from'))) {
+        $from = $this->getConfig('from');
+        if (is_array($from)) {
             $message->from(
                 $from['email'],
                 isset($from['name']) ? $from['name'] : null
@@ -236,12 +237,23 @@ class Manager extends Injectable implements EventsAwareInterface
                 break;
 
             default:
-                throw new \InvalidArgumentException(
-                    sprintf(
-                        'Driver-mail "%s" is not supported',
-                        $driver
-                    )
-                );
+                if(is_string($driver)){
+                    throw new \InvalidArgumentException(
+                        sprintf(
+                            'Driver-mail "%s" is not supported',
+                            $driver
+                        )
+                    );
+                }
+                else if(is_array($driver)){
+                    throw new \InvalidArgumentException(
+                        sprintf(
+                            'Driver-mail "%s" is not supported',
+                            json_encode($driver)
+                        )
+                    );
+                }
+
         }
     }
 
@@ -257,9 +269,15 @@ class Manager extends Injectable implements EventsAwareInterface
         $config = $this->getConfig();
 
         /** @var \Swift_SmtpTransport $transport */
-        $transport = $this->getDI()->get('\Swift_SmtpTransport')
-            ->setHost($config['host'])
-            ->setPort($config['port']);
+        $transport = $this->getDI()->get('\Swift_SmtpTransport');
+
+        if(isset($config['host'])){
+            $transport->setHost($config['host']);
+        }
+
+        if(isset($config['port'])){
+            $transport->setHost($config['port']);
+        }
 
         if (isset($config['encryption'])) {
             $transport->setEncryption(
@@ -285,10 +303,10 @@ class Manager extends Injectable implements EventsAwareInterface
     /**
      * Get option config or the entire array of config, if the parameter $key is not specified.
      *
-     * @param null $key
-     * @param null $default
+     * @param string $key
+     * @param string $default
      *
-     * @return string|array
+     * @return string|array|null
      */
     protected function getConfig($key = null, $default = null)
     {
@@ -367,7 +385,7 @@ class Manager extends Injectable implements EventsAwareInterface
      *
      * @param $viewPath
      * @param $params
-     * @param null $viewsDir
+     * @param string $viewsDir
      *
      * @return string
      */
@@ -405,7 +423,10 @@ class Manager extends Injectable implements EventsAwareInterface
 
             /** @var \Phalcon\Mvc\View\Simple $view */
             $view = $this->getDI()->get('\Phalcon\Mvc\View\Simple');
-            $view->setViewsDir($viewsDir);
+
+            if(is_string($viewsDir)){
+                $view->setViewsDir($viewsDir);
+            }
 
             if ($this->viewEngines) {
                 $view->registerEngines($this->viewEngines);

@@ -264,9 +264,12 @@ class Message
      */
     public function sender($email, $name = null)
     {
-        $email = $this->normalizeEmail($email);
+        $emails = $this->normalizeEmail($email);
 
-        $this->getMessage()->setSender($email, $name);
+        foreach($emails as $email)
+        {
+            $this->getMessage()->setSender($email, $name);
+        }
 
         return $this;
     }
@@ -841,12 +844,13 @@ class Message
      *
      * @param $email
      *
-     * @return array|string
+     * @return array
      */
     protected function normalizeEmail($email)
     {
+        $emails = [];
+
         if (is_array($email) || $email instanceof \Traversable) {
-            $emails = [];
 
             foreach ($email as $k => $v) {
                 if (is_int($k)) {
@@ -860,7 +864,8 @@ class Message
 
             return $emails;
         } else {
-            return $this->getManager()->normalizeEmail($email);
+            $emails[] = $this->getManager()->normalizeEmail($email);
+            return $emails;
         }
     }
 }
