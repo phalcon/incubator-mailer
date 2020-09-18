@@ -322,7 +322,7 @@ class Manager extends Injectable implements EventsAwareInterface
     /**
      * Convert UTF-8 encoded domain name to ASCII
      *
-     * @param $str
+     * @param string $str
      *
      * @return string
      */
@@ -381,8 +381,8 @@ class Manager extends Injectable implements EventsAwareInterface
     /**
      * Renders a view
      *
-     * @param $viewPath
-     * @param $params
+     * @param string $viewPath
+     * @param array $params
      * @param string $viewsDir
      *
      * @return string
@@ -411,7 +411,7 @@ class Manager extends Injectable implements EventsAwareInterface
      */
     protected function getView()
     {
-        if (!$this->view) {
+        if (empty($this->view)) {
             /** @var \Phalcon\Mvc\View $viewApp */
             $viewApp = $this->getDI()->get('view');
 

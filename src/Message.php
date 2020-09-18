@@ -622,7 +622,7 @@ class Message
      */
     public function getMessage()
     {
-        if (!$this->message) {
+        if (empty($this->message)) {
             $this->message = $this->getManager()->getSwift()->createMessage();
         }
 
