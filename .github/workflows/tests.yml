@@ -43,7 +43,7 @@ jobs:
         with:
           php-version: ${{ matrix.php-versions }}
           extensions: ${{ env.extensions }}
-          ini-values: sendmail_path = $HOME/bin/mhsendmail --smtp-addr mailhog:${{ job.services.mailhog.ports['1025'] }}
+          ini-values: sendmail_path = $HOME/bin/mhsendmail --smtp-addr="127.0.0.1:${{ job.services.mailhog.ports['1025'] }}"
           tools: pecl
 
       - name: Get Composer Cache Directory
@@ -70,7 +70,6 @@ jobs:
           mkdir -p "$HOME/bin"
           wget -O "$HOME/bin/mhsendmail" https://github.com/mailhog/mhsendmail/releases/download/v0.2.0/mhsendmail_linux_amd64
           chmod +x "$HOME/bin/mhsendmail"
-          ls $HOME/bin/
 
       - name: Setup Tests
         run: |

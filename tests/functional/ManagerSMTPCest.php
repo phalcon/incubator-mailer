@@ -40,7 +40,6 @@ final class ManagerSMTPCest
                 'email' => 'example@gmail.com',
                 'name'  => 'YOUR FROM NAME',
             ],
-            //'viewsDir'   => codecept_data_dir() . '/fixtures/views/'
         ];
 
         $this->di->set(
