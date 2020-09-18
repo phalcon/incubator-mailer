@@ -22,11 +22,9 @@ use Phalcon\Mvc\View\Engine\Volt as VoltEngine;
 use Phalcon\Mvc\View\Engine\Php as PhpEngine;
 use Phalcon\Mvc\View\Simple;
 
-final class ManagerSendmailCest
+final class ManagerMailCest
 {
-    private array $config;
-    private string $baseUrl;
-    private DI $di;
+    private $config, $baseUrl, $di;
 
     public function __construct()
     {

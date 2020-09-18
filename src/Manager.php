@@ -169,7 +169,7 @@ class Manager extends Injectable implements EventsAwareInterface
     /**
      * Normalize IDN domains.
      *
-     * @param $email
+     * @param string $email
      *
      * @return string
      *

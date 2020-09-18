@@ -24,9 +24,7 @@ use Phalcon\Mvc\View\Simple;
 
 final class ManagerSendmailCest
 {
-    private array $config;
-    private string $baseUrl;
-    private DI $di;
+    private $config, $baseUrl, $di;
 
     public function __construct()
     {

@@ -747,7 +747,7 @@ class Message
     /**
      * Create a Swift new Attachment from a filesystem path.
      *
-     * @param   string $file
+     * @param string $file
      *
      * @return \Swift_Attachment
      *
@@ -763,7 +763,7 @@ class Message
             ]
         );
 
-        /** @var \Swift_Attachment $image */
+        /** @var \Swift_Attachment $attachment */
         $attachment = $this->getManager()->getDI()->get('\Swift_Attachment')
             ->setFile($byteStream);
 
@@ -841,7 +841,7 @@ class Message
     /**
      * Normalize IDN domains.
      *
-     * @param $email
+     * @param string|array|\Traversable $email
      *
      * @return array
      */
