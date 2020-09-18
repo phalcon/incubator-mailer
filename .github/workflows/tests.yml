@@ -67,9 +67,9 @@ jobs:
 
       - name: Install mhsendmail to test sendmail mode
         run: |
-          wget https://github.com/mailhog/mhsendmail/releases/download/v0.2.0/mhsendmail_linux_amd64
-          sudo chmod +x mhsendmail_linux_amd64
-          sudo mv mhsendmail_linux_amd64 $HOME/bin/mhsendmail
+          mkdir -p "$HOME/bin"
+          wget -O "$HOME/bin/mhsendmail" https://github.com/mailhog/mhsendmail/releases/download/v0.2.0/mhsendmail_linux_amd64
+          chmod +x "$HOME/bin/mhsendmail"
           ls $HOME/bin/
 
       - name: Setup Tests
