@@ -43,7 +43,7 @@ jobs:
         with:
           php-version: ${{ matrix.php-versions }}
           extensions: ${{ env.extensions }}
-          ini-values: sendmail_path = /usr/bin/mhsendmail --smtp-addr mailhog:${{ job.services.mailhog.ports['1025'] }}
+          ini-values: sendmail_path = $HOME/bin/mhsendmail --smtp-addr mailhog:${{ job.services.mailhog.ports['1025'] }}
           tools: pecl
 
       - name: Get Composer Cache Directory
@@ -60,16 +60,17 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-suggest
 
+      - name: Install Go for check sendmail
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go-version }}
+
       - name: Install mhsendmail to test sendmail mode
         run: |
-          wget https://golang.org/dl/go1.15.2.linux-amd64.tar.gz
-          sudo tar -C /usr/local -xzf go1.15.2.linux-amd64.tar.gz
-          export PATH=$PATH:/usr/local/go/bin
           wget https://github.com/mailhog/mhsendmail/releases/download/v0.2.0/mhsendmail_linux_amd64
           sudo chmod +x mhsendmail_linux_amd64
-          sudo mv mhsendmail_linux_amd64 /usr/local/bin/mhsendmail
-          ls /usr/local/go*
-          ls /usr/local/bin/mb*
+          sudo mv mhsendmail_linux_amd64 $HOME/bin/mhsendmail
+          ls $HOME/bin/
 
       - name: Setup Tests
         run: |
