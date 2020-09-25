@@ -52,7 +52,7 @@ $config = [
 ];
 ```
 
-## Send mail
+## Send message
 
 ### createMessage()
 
@@ -77,7 +77,7 @@ $message->send();
 ### createMessageFromView()
 ```php
 /**
-    To create mail with View, you need to define in the DI the component simple View. 
+    To create message with View, you need to define in the DI the component simple View. 
 */
 $this->di->set(
     'simple',
