@@ -116,7 +116,7 @@ final class ManagerSMTPCest
         //Check that there are one mail send
         $I->assertCount(3, $dataMail);
 
-        $mail = end($dataMail);
+        $mail = $dataMail[0];
 
         $mailFromData = $mail->From;
         $mailToData   = end($mail->To);

@@ -32,7 +32,7 @@ final class ManagerSendmailCest
 
         $this->config = [
             'driver'    => 'sendmail',
-            'sendmail'  => '/usr/sbin/sendmail -t -S ' . getenv('DATA_MAILHOG_HOST_URI') . ':' . getenv('DATA_MAILHOG_SMTP_PORT'),
+            'sendmail'  => '/usr/sbin/sendmail -S ' . getenv('DATA_MAILHOG_HOST_URI') . ':' . getenv('DATA_MAILHOG_SMTP_PORT') . ' -t ',
             'from'      => [
                 'email' => 'example_sendmail@gmail.com',
                 'name'  => 'EXAMPLE SENDMAIL',
@@ -114,7 +114,7 @@ final class ManagerSendmailCest
         //Check that there are one mail send
         $I->assertCount(4, $dataMail);
 
-        $mail = end($dataMail);
+        $mail = $dataMail[0];
 
         $mailFromData = $mail->From;
         $mailToData   = end($mail->To);
