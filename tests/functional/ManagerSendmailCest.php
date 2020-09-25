@@ -32,7 +32,7 @@ final class ManagerSendmailCest
 
         $this->config = [
             'driver'    => 'sendmail',
-            'sendmail'  => '/usr/sbin/sendmail -S ' . getenv('DATA_MAILHOG_HOST_URI') . ':' . getenv('DATA_MAILHOG_SMTP_PORT') . ' -t ',
+            'sendmail'  => '$HOME/bin/mhsendmail --smtp-addr="' . getenv('DATA_MAILHOG_HOST_URI') . ':' . getenv('DATA_MAILHOG_SMTP_PORT') . '" ',
             'from'      => [
                 'email' => 'example_sendmail@gmail.com',
                 'name'  => 'EXAMPLE SENDMAIL',
@@ -122,10 +122,10 @@ final class ManagerSendmailCest
         $mailFrom = $mailFromData->Mailbox . '@' . $mailFromData->Domain;
         $mailTo   = $mailToData->Mailbox . '@' . $mailToData->Domain;
 
-        $I->assertEquals($mailFrom, $this->config['from']['email']);
-        $I->assertEquals($mailTo, $to);
+        $I->assertEquals($this->config['from']['email'], $mailFrom);
+        $I->assertEquals($to, $mailTo);
 
-        $I->assertEquals($mail->Content->Body, $body);
+        $I->assertEquals($body, $mail->Content->Body);
         $I->assertStringContainsString('Subject: ' . $subject, $mail->Raw->Data);
     }
 
@@ -174,12 +174,12 @@ final class ManagerSendmailCest
         $mailFrom = $mailFromData->Mailbox . '@' . $mailFromData->Domain;
         $mailTo   = $mailToData->Mailbox . '@' . $mailToData->Domain;
 
-        $I->assertEquals($mailFrom, $this->config['from']['email']);
-        $I->assertEquals($mailTo, $to);
+        $I->assertEquals($this->config['from']['email'], $mailFrom);
+        $I->assertEquals($to, $mailTo);
 
         $body = $this->di->get('simple')->render($viewPath, $params);
 
-        $I->assertEquals($mail->Content->Body, $body);
+        $I->assertEquals($body, $mail->Content->Body);
         $I->assertStringContainsString('Subject: ' . $subject, $mail->Raw->Data);
     }
 }

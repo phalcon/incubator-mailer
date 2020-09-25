@@ -120,10 +120,10 @@ final class ManagerMailCest
         $mailFrom = $mailFromData->Mailbox . '@' . $mailFromData->Domain;
         $mailTo   = $mailToData->Mailbox . '@' . $mailToData->Domain;
 
-        $I->assertEquals($mailFrom, $this->config['from']['email']);
-        $I->assertEquals($mailTo, $to);
+        $I->assertEquals($this->config['from']['email'], $mailFrom);
+        $I->assertEquals($to, $mailTo);
 
-        $I->assertEquals($mail->Content->Body, $body);
+        $I->assertEquals($body, $mail->Content->Body);
         $I->assertStringContainsString('Subject: ' . $subject, $mail->Raw->Data);
     }
 
@@ -172,12 +172,12 @@ final class ManagerMailCest
         $mailFrom = $mailFromData->Mailbox . '@' . $mailFromData->Domain;
         $mailTo   = $mailToData->Mailbox . '@' . $mailToData->Domain;
 
-        $I->assertEquals($mailFrom, $this->config['from']['email']);
-        $I->assertEquals($mailTo, $to);
+        $I->assertEquals($this->config['from']['email'], $mailFrom);
+        $I->assertEquals($to, $mailTo);
 
         $body = $this->di->get('simple')->render($viewPath, $params);
 
-        $I->assertEquals($mail->Content->Body, $body);
+        $I->assertEquals($body, $mail->Content->Body);
         $I->assertStringContainsString('Subject: ' . $subject, $mail->Raw->Data);
     }
 }
