@@ -32,7 +32,7 @@ final class ManagerSendmailCest
 
         $this->config = [
             'driver'    => 'sendmail',
-            'sendmail'  => '/usr/sbin/sendmail -bs -S ' . getenv('DATA_MAILHOG_HOST_URI') . ':' . getenv('DATA_MAILHOG_SMTP_PORT'),
+            'sendmail'  => '/usr/sbin/sendmail -t -S ' . getenv('DATA_MAILHOG_HOST_URI') . ':' . getenv('DATA_MAILHOG_SMTP_PORT'),
             'from'      => [
                 'email' => 'example@gmail.com',
                 'name'  => 'YOUR FROM NAME',
