@@ -34,9 +34,10 @@ final class ManagerSendmailCest
             'driver'    => 'sendmail',
             'sendmail'  => '/usr/sbin/sendmail -t -S ' . getenv('DATA_MAILHOG_HOST_URI') . ':' . getenv('DATA_MAILHOG_SMTP_PORT'),
             'from'      => [
-                'email' => 'example@gmail.com',
-                'name'  => 'YOUR FROM NAME',
-            ]
+                'email' => 'example_sendmail@gmail.com',
+                'name'  => 'EXAMPLE SENDMAIL',
+            ],
+            'encryption' => null
         ];
 
         $this->di->set(
@@ -111,7 +112,7 @@ final class ManagerSendmailCest
         $dataMail = \json_decode($dataMail);
 
         //Check that there are one mail send
-        $I->assertCount(1, $dataMail);
+        $I->assertCount(4, $dataMail);
 
         $mail = end($dataMail);
 

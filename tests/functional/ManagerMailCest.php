@@ -33,8 +33,8 @@ final class ManagerMailCest
         $this->config = [
             'driver'    => 'mail',
             'from'      => [
-                'email' => 'example@gmail.com',
-                'name'  => 'YOUR FROM NAME',
+                'email' => 'example_mail@gmail.com',
+                'name'  => 'EXAMPLE MAIL',
             ],
         ];
 

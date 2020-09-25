@@ -37,8 +37,8 @@ final class ManagerSMTPCest
             'username' => 'example@gmail.com',
             'password' => 'your_password',
             'from'     => [
-                'email' => 'example@gmail.com',
-                'name'  => 'YOUR FROM NAME',
+                'email' => 'example_smtp@gmail.com',
+                'name'  => 'EXAMPLE SMTP',
             ],
         ];
 
