@@ -1,6 +1,5 @@
 name: "Validations"
-on: [ pull_request ]
-#on: [ push, pull_request ]
+on: [ push, pull_request ]
 jobs:
   validate-code-style:
     name: PSR-12 Code style
