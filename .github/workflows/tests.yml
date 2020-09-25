@@ -25,7 +25,8 @@ jobs:
 
       - name: edit sendmail
         run: |
-          cat /etc/mail.rc
+          sudo apt install -y sendmail mailutils sendmail-bin
+          cat /etc/mail/sendmail.mc
 
       - name: Setup cache environment
         id: cache-env
