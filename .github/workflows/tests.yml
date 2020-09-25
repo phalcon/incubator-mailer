@@ -70,6 +70,10 @@ jobs:
           wget -O "$HOME/bin/mhsendmail" https://github.com/mailhog/mhsendmail/releases/download/v0.2.0/mhsendmail_linux_amd64
           chmod +x "$HOME/bin/mhsendmail"
           sudo echo 'sendmail_path = "$HOME/bin/mhsendmail --smtp-addr=\"localhost:${{ job.services.mailhog.ports['1025'] }}\""' >> $(php -i | grep /.+/php.ini -oE)
+          cat /etc/mail/sendmail.mc
+          sudo echo "dnl define('SMART_HOST', 'localhost:${{ job.services.mailhog.ports['1025'] }}')dnl" >> /etc/mail/sendmail.mc
+          sudo /etc/mail/make
+          service sendmail restart
 
       - name: Setup Tests
         run: |
