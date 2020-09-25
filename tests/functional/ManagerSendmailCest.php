@@ -86,7 +86,7 @@ final class ManagerSendmailCest
     public function mailerManagerCreateMessage(FunctionalTester $I)
     {
         $to      = 'example_to@gmail.com';
-        $subject = 'Hello World';
+        $subject = 'Hello Sendmail';
         $body    = 'Lorem Ipsum';
 
         $mailer = new Manager($this->config);
@@ -143,7 +143,7 @@ final class ManagerSendmailCest
         ];
 
         $to      = 'example_to@gmail.com';
-        $subject = 'Hello World';
+        $subject = 'Hello SendmailView';
 
         $message = $mailer->createMessageFromView($viewPath, $params)
             ->to($to)

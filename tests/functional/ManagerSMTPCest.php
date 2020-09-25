@@ -88,7 +88,7 @@ final class ManagerSMTPCest
     public function mailerManagerCreateMessage(FunctionalTester $I)
     {
         $to      = 'example_to@gmail.com';
-        $subject = 'Hello World';
+        $subject = 'Hello SMTP';
         $body    = 'Lorem Ipsum';
 
         $mailer = new Manager($this->config);
@@ -145,7 +145,7 @@ final class ManagerSMTPCest
         ];
 
         $to      = 'example_to@gmail.com';
-        $subject = 'Hello World';
+        $subject = 'Hello SMTPView';
 
         $message = $mailer->createMessageFromView($viewPath, $params)
             ->to($to)
