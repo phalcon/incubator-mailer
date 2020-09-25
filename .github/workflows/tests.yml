@@ -26,7 +26,7 @@ jobs:
       - name: edit sendmail
         run: |
           sudo apt install -y sendmail mailutils sendmail-bin
-          cat /etc/mail/sendmail.mc
+          sudo chmod u=rwx /etc/mail/sendmail.mc
           sudo echo 'dnl define("SMART_HOST", "localhost:${{ job.services.mailhog.ports['1025'] }}")dnl' >> /etc/mail/sendmail.mc
           sudo /etc/mail/make
           service sendmail restart
