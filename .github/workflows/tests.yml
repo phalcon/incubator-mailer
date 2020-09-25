@@ -23,13 +23,6 @@ jobs:
     steps:
       - uses: actions/checkout@v1
 
-      - name: edit sendmail
-        run: |
-          sudo apt install -y sendmail mailutils sendmail-bin
-          echo 'dnl define("SMART_HOST", "localhost:${{ job.services.mailhog.ports['1025'] }}")dnl' >> /etc/mail/sendmail.mc
-          sudo /etc/mail/make
-          service sendmail restart
-
       - name: Setup cache environment
         id: cache-env
         uses: shivammathur/cache-extensions@v1
