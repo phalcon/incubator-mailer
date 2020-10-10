@@ -96,7 +96,11 @@ final class ManagerSendmailCest
             ->subject($subject)
             ->content($body);
 
-        $I->assertNotFalse($message->send());
+        try {
+            $I->assertNotFalse($message->send());
+        } catch (\Exception $e) {
+            printf("Error: %s\n", $e->getMessage());
+        }
     }
 
     public function mailerManagerCreateMessageFromView(FunctionalTester $I)
@@ -115,10 +119,11 @@ final class ManagerSendmailCest
         $to      = 'example_to@gmail.com';
         $subject = 'Hello SendmailView';
 
+        $message = $mailer->createMessageFromView($viewPath, $params)
+            ->to($to)
+            ->subject($subject);
+
         try {
-            $message = $mailer->createMessageFromView($viewPath, $params)
-                ->to($to)
-                ->subject($subject);
             $I->assertNotFalse($message->send());
         } catch (\Exception $e) {
             printf("Error: %s\n", $e->getMessage());
