@@ -228,10 +228,6 @@ class Manager extends Injectable implements EventsAwareInterface
                 $this->transport = $this->registerTransportSmtp();
                 break;
 
-            case 'mail':
-                $this->transport = $this->registerTransportMail();
-                break;
-
             case 'sendmail':
                 $this->transport = $this->registerTransportSendmail();
                 break;
@@ -333,18 +329,6 @@ class Manager extends Injectable implements EventsAwareInterface
         } else {
             return $str;
         }
-    }
-
-    /**
-     * Create a new MailTransport instance.
-     *
-     * @return \Swift_MailTransport
-     *
-     * @see \Swift_MailTransport
-     */
-    protected function registerTransportMail()
-    {
-        return $this->getDI()->get('\Swift_MailTransport');
     }
 
     /**
