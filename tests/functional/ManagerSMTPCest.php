@@ -114,7 +114,7 @@ final class ManagerSMTPCest
         $dataMail = \json_decode($dataMail);
 
         //Check that there are one mail send
-        $I->assertCount(3, $dataMail);
+        $I->assertCount(1, $dataMail);
 
         $mail = $dataMail[0];
 
@@ -166,7 +166,7 @@ final class ManagerSMTPCest
         $dataMail = \json_decode($dataMail);
 
         //Check that there are one mail send
-        $I->assertCount(4, $dataMail);
+        $I->assertCount(2, $dataMail);
 
         $mail = $dataMail[0];
 
