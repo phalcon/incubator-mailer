@@ -10,6 +10,7 @@
         <directory name="src/" />
         <ignoreFiles>
             <directory name="vendor" />
+            <file name="vendor/symfony/polyfill-mbstring/bootstrap80.php" />
         </ignoreFiles>
     </projectFiles>
 
