@@ -12,8 +12,7 @@
     ],
     "homepage": "https://phalcon.io",
     "license": "BSD-3-Clause",
-    "authors": [
-        {
+    "authors": [{
             "name": "Phalcon Team",
             "email": "team@phalcon.io",
             "homepage": "https://phalcon.io/en/team"
@@ -29,13 +28,13 @@
         "forum": "https://forum.phalcon.io"
     },
     "require": {
-        "php": ">=7.2",
-        "ext-phalcon": "^4.0",
+        "php": ">=8.0",
+        "ext-phalcon": "^5.0.0beta2",
         "ext-json": "*",
         "swiftmailer/swiftmailer": "~6.2"
     },
     "require-dev": {
-        "phalcon/ide-stubs": "^4.0",
+        "phalcon/ide-stubs": "^4.1",
         "vimeo/psalm": "^4.1",
         "squizlabs/php_codesniffer": "^3.5",
         "codeception/codeception": "^4.1",

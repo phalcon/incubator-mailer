@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace Phalcon\Incubator\Mailer\Tests\Functional\Manager;
 
 use FunctionalTester;
-use Phalcon\Helper\Str;
+use Phalcon\Support\Helper\Str\DirSeparator;
 use Phalcon\Incubator\Mailer\Manager;
 use Phalcon\Di\FactoryDefault as DI;
 use Phalcon\Mvc\View;
@@ -24,11 +24,14 @@ use Phalcon\Mvc\View\Simple;
 
 final class ManagerSMTPCest
 {
-    private $config, $baseUrl, $di;
+    private $config;
+    private $baseUrl;
+    private $di;
 
     public function __construct()
     {
         $this->di = new DI();
+        $dirSeparator = new DirSeparator();
 
         $this->config = [
             'driver'   => 'smtp',
@@ -44,10 +47,10 @@ final class ManagerSMTPCest
 
         $this->di->set(
             'simple',
-            function () {
+            function () use ($dirSeparator) {
                 $view = new Simple();
 
-                $view->setViewsDir(Str::dirSeparator(
+                $view->setViewsDir($dirSeparator->__invoke(
                     codecept_data_dir() . 'fixtures/views'
                 ));
 
@@ -56,16 +59,15 @@ final class ManagerSMTPCest
             true
         );
 
-        $this->di->setShared('view', function () {
+        $this->di->setShared('view', function () use ($dirSeparator) {
             $view = new View();
             $view->setDI($this);
-            $view->setViewsDir(Str::dirSeparator(
+            $view->setViewsDir($dirSeparator->__invoke(
                 codecept_data_dir() . 'fixtures/views'
             ));
 
             $view->registerEngines([
                 '.volt'  => function ($view) {
-
                     $volt = new VoltEngine($view, $this);
 
                     $volt->setOptions([

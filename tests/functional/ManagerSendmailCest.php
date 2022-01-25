@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace Phalcon\Incubator\Mailer\Tests\Functional\Manager;
 
 use FunctionalTester;
-use Phalcon\Helper\Str;
+use Phalcon\Support\Helper\Str\DirSeparator;
 use Phalcon\Incubator\Mailer\Manager;
 use Phalcon\Di\FactoryDefault as DI;
 use Phalcon\Mvc\View;
@@ -24,11 +24,15 @@ use Phalcon\Mvc\View\Simple;
 
 final class ManagerSendmailCest
 {
-    private $config, $baseUrl, $di;
+    private $config;
+    private $baseUrl;
+    private $di;
+    private $dirSeparator;
 
     public function __construct()
     {
         $this->di = new DI();
+        $this->dirSeparator = new DirSeparator();
 
         $this->config = [
             'driver'    => 'sendmail',
@@ -45,7 +49,7 @@ final class ManagerSendmailCest
             function () {
                 $view = new Simple();
 
-                $view->setViewsDir(Str::dirSeparator(
+                $view->setViewsDir($this->dirSeparator->__invoke(
                     codecept_data_dir() . 'fixtures/views'
                 ));
 
@@ -57,13 +61,12 @@ final class ManagerSendmailCest
         $this->di->setShared('view', function () {
             $view = new View();
             $view->setDI($this);
-            $view->setViewsDir(Str::dirSeparator(
+            $view->setViewsDir($this->dirSeparator->__invoke(
                 codecept_data_dir() . 'fixtures/views'
             ));
 
             $view->registerEngines([
                 '.volt'  => function ($view) {
-
                     $volt = new VoltEngine($view, $this);
 
                     $volt->setOptions([
