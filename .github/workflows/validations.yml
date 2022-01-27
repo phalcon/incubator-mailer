@@ -1,5 +1,5 @@
 name: "Validations"
-on: [ push, pull_request ]
+on: [push, pull_request]
 jobs:
   validate-code-style:
     name: PSR-12 Code style
@@ -31,13 +31,13 @@ jobs:
     name: Static Code with PHP ${{ matrix.php-versions }}
     runs-on: ubuntu-latest
     env:
-      extensions: mbstring, intl, json, phalcon4
+      extensions: mbstring, intl, json, phalcon-5.0.0beta2
       key: cache-v0.0.2
     needs: validate-code-style
     strategy:
       fail-fast: false
       matrix:
-        php-versions: [ '7.2', '7.3', '7.4' ]
+        php-versions: ["7.4", "8.0"]
 
     steps:
       - name: Checkout the code
