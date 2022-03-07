@@ -265,6 +265,7 @@ class Message
     public function sender($email, $name = null)
     {
         $emails = $this->normalizeEmail($email);
+        $emails = is_array($email) ? $email : [$emails];
 
         foreach ($emails as $email) {
             $this->getMessage()->setSender($email, $name);
@@ -843,7 +844,7 @@ class Message
      *
      * @param string|array|\Traversable $email
      *
-     * @return array
+     * @return string|array
      */
     protected function normalizeEmail($email)
     {
@@ -862,8 +863,7 @@ class Message
 
             return $emails;
         } else {
-            $emails[] = $this->getManager()->normalizeEmail($email);
-            return $emails;
+            return $this->getManager()->normalizeEmail($email);
         }
     }
 }

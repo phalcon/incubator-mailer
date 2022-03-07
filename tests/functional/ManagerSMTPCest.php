@@ -184,4 +184,69 @@ final class ManagerSMTPCest
         $I->assertEquals($body, $mail->Content->Body);
         $I->assertStringContainsString('Subject: ' . $subject, $mail->Raw->Data);
     }
+
+    public function mailerManagerCreateMessageWithName(FunctionalTester $I)
+    {
+        $sender  = 'example_sender@gmail.com';
+        $name    = 'Example Name';
+        $from    = 'example_from@gmail.com';
+        $to      = 'example_to@gmail.com';
+        $subject = 'Hello SMTP';
+        $body    = 'Lorem Ipsum';
+
+        $mailer = new Manager($this->config);
+
+        $message = $mailer->createMessage()
+            ->sender($sender, $name)
+            ->from($from, $name)
+            ->to($to, $name)
+            ->subject($subject)
+            ->content($body);
+
+        $message->send();
+
+        $opts = [
+            'http' => [
+                'method' => 'GET',
+                'header' => 'Accept-language: en\r\n'
+            ]
+        ];
+
+        $context = stream_context_create($opts);
+
+        // Get all mail send in the MailHog SMTP
+        $dataMail = file_get_contents($this->baseUrl . 'messages', false, $context);
+        $dataMail = \json_decode($dataMail);
+
+        //Check that there are one mail send
+        $I->assertCount(3, $dataMail);
+
+        $mail = $dataMail[0];
+
+        $mailFromData = $mail->From;
+        $mailToData   = end($mail->To);
+
+        $mailFrom = $mailFromData->Mailbox . '@' . $mailFromData->Domain;
+        $mailTo   = $mailToData->Mailbox . '@' . $mailToData->Domain;
+
+        $I->assertEquals($sender, $mailFrom);
+        $I->assertEquals($to, $mailTo);
+
+        $headers = $mail->Content->Headers;
+
+        $mailSenderWithName = end($headers->Sender);
+        $senderWithName = sprintf('%s <%s>', $name, $sender);
+        $I->assertEquals($senderWithName, $mailSenderWithName);
+
+        $mailFromWithName = end($headers->From);
+        $fromWithName = sprintf('%s <%s>', $name, $from);
+        $I->assertEquals($fromWithName, $mailFromWithName);
+
+        $mailToWithName = end($headers->To);
+        $toWithName = sprintf('%s <%s>', $name, $to);
+        $I->assertEquals($toWithName, $mailToWithName);
+
+        $I->assertEquals($body, $mail->Content->Body);
+        $I->assertStringContainsString('Subject: ' . $subject, $mail->Raw->Data);
+    }
 }
