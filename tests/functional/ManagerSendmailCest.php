@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace Phalcon\Incubator\Mailer\Tests\Functional\Manager;
 
 use FunctionalTester;
-use Phalcon\Helper\Str;
+use Phalcon\Support\HelperFactory;
 use Phalcon\Incubator\Mailer\Manager;
 use Phalcon\Di\FactoryDefault as DI;
 use Phalcon\Mvc\View;
@@ -29,6 +29,8 @@ final class ManagerSendmailCest
     public function __construct()
     {
         $this->di = new DI();
+
+        $helper = new HelperFactory();
 
         $this->config = [
             'driver'    => 'sendmail',
@@ -45,7 +47,7 @@ final class ManagerSendmailCest
             function () {
                 $view = new Simple();
 
-                $view->setViewsDir(Str::dirSeparator(
+                $view->setViewsDir($helper->dirSeparator(
                     codecept_data_dir() . 'fixtures/views'
                 ));
 
@@ -57,7 +59,7 @@ final class ManagerSendmailCest
         $this->di->setShared('view', function () {
             $view = new View();
             $view->setDI($this);
-            $view->setViewsDir(Str::dirSeparator(
+            $view->setViewsDir($helper->dirSeparator(
                 codecept_data_dir() . 'fixtures/views'
             ));
 

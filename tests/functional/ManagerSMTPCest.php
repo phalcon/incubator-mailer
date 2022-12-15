@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace Phalcon\Incubator\Mailer\Tests\Functional\Manager;
 
 use FunctionalTester;
-use Phalcon\Helper\Str;
+use Phalcon\Support\HelperFactory;
 use Phalcon\Incubator\Mailer\Manager;
 use Phalcon\Di\FactoryDefault as DI;
 use Phalcon\Mvc\View;
@@ -47,7 +47,9 @@ final class ManagerSMTPCest
             function () {
                 $view = new Simple();
 
-                $view->setViewsDir(Str::dirSeparator(
+                $helper = new HelperFactory();
+
+                $view->setViewsDir($helper->dirSeparator(
                     codecept_data_dir() . 'fixtures/views'
                 ));
 
@@ -59,7 +61,8 @@ final class ManagerSMTPCest
         $this->di->setShared('view', function () {
             $view = new View();
             $view->setDI($this);
-            $view->setViewsDir(Str::dirSeparator(
+            $helper = new HelperFactory();
+            $view->setViewsDir($helper->dirSeparator(
                 codecept_data_dir() . 'fixtures/views'
             ));
 
