@@ -19,7 +19,6 @@
 
 namespace Phalcon\Incubator\Mailer;
 
-use Phalcon\Config;
 use Phalcon\DI\Injectable;
 use Phalcon\Events\EventsAwareInterface;
 use Phalcon\Events\ManagerInterface;
@@ -44,29 +43,32 @@ class Manager extends Injectable implements EventsAwareInterface
     /**
      * @var array
      */
-    protected $config = [];
+    protected array $config = [];
 
     /**
      * @var \Swift_Transport
      */
-    protected $transport;
+    protected \Swift_Transport $transport;
 
     /**
      * @var \Swift_Mailer
      */
-    protected $mailer;
+    protected \Swift_Mailer $mailer;
 
     /**
      * @var \Phalcon\Mvc\View\Simple
      */
-    protected $view;
+    protected \Phalcon\Mvc\View\Simple $view;
 
     /**
      * @var array
      */
-    protected $viewEngines = null;
+    protected ?array $viewEngines = null;
 
-    protected $eventsManager;
+    /**
+     * @var \Phalcon\Events\ManagerInterface
+     */
+    protected ?ManagerInterface $eventsManager = null;
 
     /**
      * Create a new MailerManager component using $config for configuring
@@ -97,7 +99,7 @@ class Manager extends Injectable implements EventsAwareInterface
      *
      * @return Message
      */
-    public function createMessage()
+    public function createMessage(): Message
     {
         $eventsManager = $this->getEventsManager();
 
@@ -144,7 +146,7 @@ class Manager extends Injectable implements EventsAwareInterface
      *
      * @see \Phalcon\Mailer\Manager::createMessage()
      */
-    public function createMessageFromView($view, $params = [], $viewsDir = null)
+    public function createMessageFromView(string $view, array $params = [], $viewsDir = null): Message
     {
         $message = $this->createMessage();
 
@@ -161,7 +163,7 @@ class Manager extends Injectable implements EventsAwareInterface
      *
      * @return \Swift_Mailer
      */
-    public function getSwift()
+    public function getSwift(): \Swift_Mailer
     {
         return $this->mailer;
     }
@@ -175,7 +177,7 @@ class Manager extends Injectable implements EventsAwareInterface
      *
      * @see \Phalcon\Mailer\Manager::punycode()
      */
-    public function normalizeEmail($email)
+    public function normalizeEmail(string $email): string
     {
         if (preg_match('#[^(\x20-\x7F)]+#', $email)) {
             list($user, $domain) = explode('@', $email);
@@ -191,7 +193,7 @@ class Manager extends Injectable implements EventsAwareInterface
      *
      * @param array $engines
      */
-    public function setViewEngines(array $engines)
+    public function setViewEngines(array $engines): void
     {
         $this->viewEngines = $engines;
     }
@@ -204,7 +206,7 @@ class Manager extends Injectable implements EventsAwareInterface
      * @see \Phalcon\Mailer\Manager::registerSwiftTransport()
      * @see \Phalcon\Mailer\Manager::registerSwiftMailer()
      */
-    protected function configure(array $config)
+    protected function configure(array $config): void
     {
         $this->config = $config;
 
@@ -221,7 +223,7 @@ class Manager extends Injectable implements EventsAwareInterface
      * - mail
      *
      */
-    protected function registerSwiftTransport()
+    protected function registerSwiftTransport(): void
     {
         switch ($driver = $this->getConfig('driver')) {
             case 'smtp':
@@ -258,7 +260,7 @@ class Manager extends Injectable implements EventsAwareInterface
      *
      * @see \Swift_SmtpTransport
      */
-    protected function registerTransportSmtp()
+    protected function registerTransportSmtp(): \Swift_SmtpTransport
     {
         $config = $this->getConfig();
 
@@ -302,7 +304,7 @@ class Manager extends Injectable implements EventsAwareInterface
      *
      * @return string|array|null
      */
-    protected function getConfig($key = null, $default = null)
+    protected function getConfig(?string $key = null, ?string $default = null)
     {
         if ($key !== null) {
             if (isset($this->config[$key])) {
@@ -322,7 +324,7 @@ class Manager extends Injectable implements EventsAwareInterface
      *
      * @return string
      */
-    protected function punycode($str)
+    protected function punycode(string $str): string
     {
         if (function_exists('idn_to_ascii')) {
             return idn_to_ascii($str);
@@ -338,7 +340,7 @@ class Manager extends Injectable implements EventsAwareInterface
      *
      * @see \Swift_SendmailTransport
      */
-    protected function registerTransportSendmail()
+    protected function registerTransportSendmail(): \Swift_SendmailTransport
     {
         /** @var \Swift_SendmailTransport $transport */
         $transport = $this->getDI()->get('\Swift_SendmailTransport')
@@ -371,7 +373,7 @@ class Manager extends Injectable implements EventsAwareInterface
      *
      * @return string
      */
-    protected function renderView($viewPath, $params, $viewsDir = null)
+    protected function renderView(string $viewPath, array $params, $viewsDir = null): string
     {
         $view = $this->getView();
 
@@ -393,7 +395,7 @@ class Manager extends Injectable implements EventsAwareInterface
      *
      * @return \Phalcon\Mvc\View\Simple
      */
-    protected function getView()
+    protected function getView(): \Phalcon\Mvc\View\Simple
     {
         if (empty($this->view)) {
             /** @var \Phalcon\Mvc\View $viewApp */

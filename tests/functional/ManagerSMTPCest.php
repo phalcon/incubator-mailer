@@ -186,5 +186,18 @@ final class ManagerSMTPCest
 
         $I->assertEquals($body, $mail->Content->Body);
         $I->assertStringContainsString('Subject: ' . $subject, $mail->Raw->Data);
+
+        // Clean emails
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $this->baseUrl . 'messages');
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
+        $result     = curl_exec($ch);
+        $httpCode   = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        curl_close($ch);
+        $I->assertEquals(200, $httpCode);
+
+
+
     }
 }
