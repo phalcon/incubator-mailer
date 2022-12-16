@@ -22,7 +22,7 @@ namespace Phalcon\Incubator\Mailer;
 use Phalcon\DI\Injectable;
 use Phalcon\Events\EventsAwareInterface;
 use Phalcon\Events\ManagerInterface;
-use \Phalcon\Mvc\View\Simple;
+use Phalcon\Mvc\View\Simple;
 
 /**
  * Class Manager
@@ -41,39 +41,27 @@ use \Phalcon\Mvc\View\Simple;
 class Manager extends Injectable implements EventsAwareInterface
 {
     /**
-     * @var array
+     * @var array<string, int|string|array<string|int, string>>
      */
     protected array $config = [];
 
-    /**
-     * @var \Swift_Transport
-     */
     protected \Swift_Transport $transport;
 
-    /**
-     * @var \Swift_Mailer
-     */
     protected \Swift_Mailer $mailer;
 
-    /**
-     * @var \Phalcon\Mvc\View\Simple
-     */
     protected Simple $view;
 
     /**
-     * @var array
+     * @var array<string, string>
      */
     protected ?array $viewEngines = null;
 
-    /**
-     * @var \Phalcon\Events\ManagerInterface
-     */
     protected ?ManagerInterface $eventsManager = null;
 
     /**
      * Create a new MailerManager component using $config for configuring
      *
-     * @param array $config
+     * @param array<string, string|array<string|int, string>> $config
      */
     public function __construct(array $config)
     {
@@ -111,7 +99,7 @@ class Manager extends Injectable implements EventsAwareInterface
         $message = $this->getDI()->get(
             '\Phalcon\Incubator\Mailer\Message',
             [
-                $this,
+                $this
             ]
         );
 
@@ -139,14 +127,12 @@ class Manager extends Injectable implements EventsAwareInterface
      * - mailer:afterCreateMessage
      *
      * @param string $view
-     * @param array $params         optional
+     * @param array<string, mixed> $params optional
      * @param null|string $viewsDir optional
-     *
-     * @return Message
      *
      * @see \Phalcon\Mailer\Manager::createMessage()
      */
-    public function createMessageFromView(string $view, array $params = [], $viewsDir = null): Message
+    public function createMessageFromView(string $view, array $params = [], ?string $viewsDir = null): Message
     {
         $message = $this->createMessage();
 
@@ -160,8 +146,6 @@ class Manager extends Injectable implements EventsAwareInterface
 
     /**
      * Return a {@link \Swift_Mailer} instance
-     *
-     * @return \Swift_Mailer
      */
     public function getSwift(): \Swift_Mailer
     {
@@ -172,8 +156,6 @@ class Manager extends Injectable implements EventsAwareInterface
      * Normalize IDN domains.
      *
      * @param string $email
-     *
-     * @return string
      *
      * @see \Phalcon\Mailer\Manager::punycode()
      */
@@ -191,7 +173,7 @@ class Manager extends Injectable implements EventsAwareInterface
     /**
      * set value of $viewEngines
      *
-     * @param array $engines
+     * @param array<string, string> $engines
      */
     public function setViewEngines(array $engines): void
     {
@@ -201,7 +183,7 @@ class Manager extends Injectable implements EventsAwareInterface
     /**
      * Configure MailerManager class
      *
-     * @param array $config
+     * @param array<string, mixed> $config
      *
      * @see \Phalcon\Mailer\Manager::registerSwiftTransport()
      * @see \Phalcon\Mailer\Manager::registerSwiftMailer()
@@ -221,7 +203,6 @@ class Manager extends Injectable implements EventsAwareInterface
      * - smtp
      * - sendmail
      * - mail
-     *
      */
     protected function registerSwiftTransport(): void
     {
@@ -359,7 +340,7 @@ class Manager extends Injectable implements EventsAwareInterface
         $this->mailer = $this->getDI()->get(
             '\Swift_Mailer',
             [
-                $this->transport,
+                $this->transport
             ]
         );
     }
@@ -373,7 +354,7 @@ class Manager extends Injectable implements EventsAwareInterface
      *
      * @return string
      */
-    protected function renderView(string $viewPath, array $params, $viewsDir = null): string
+    protected function renderView(string $viewPath, array $params, ?string $viewsDir = null): string
     {
         $view = $this->getView();
 

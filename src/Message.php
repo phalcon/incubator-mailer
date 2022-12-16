@@ -41,19 +41,19 @@ class Message
     /**
      * @var \Phalcon\Incubator\Mailer\Manager
      */
-    protected $manager;
+    protected Manager $manager;
 
     /**
      * @var \Swift_Message
      */
-    protected $message;
+    protected \Swift_Message $message;
 
     /**
      * An array of email which failed send to recipients.
      *
-     * @var array
+     * @var array<int, string>
      */
-    protected $failedRecipients = [];
+    protected array $failedRecipients = [];
 
     /**
      * Create a new Message using $mailer for sending from SwiftMailer
@@ -74,10 +74,8 @@ class Message
      * If $name is passed and the first parameter is a string, this name will be
      * associated with the address.
      *
-     * @param string|array $email
+     * @param string|array<int|string, string> $email
      * @param string|null $name optional
-     *
-     * @return $this
      *
      * @see \Swift_Message::setFrom()
      */
@@ -92,8 +90,6 @@ class Message
 
     /**
      * Get the from address of this message.
-     *
-     * @return string
      *
      * @see \Swift_Message::getFrom()
      */
@@ -111,14 +107,12 @@ class Message
      * If $name is passed and the first parameter is a string, this name will be
      * associated with the address.
      *
-     * @param string|array $email
+     * @param string|array<int|string, string> $email
      * @param string|null $name optional
-     *
-     * @return $this
      *
      * @see \Swift_Message::setReplyTo()
      */
-    public function replyTo(string|array $email, ?string $name = null): self
+    public function replyTo($email, ?string $name = null): self
     {
         $email = $this->normalizeEmail($email);
 
@@ -129,8 +123,6 @@ class Message
 
     /**
      * Get the reply-to address of this message.
-     *
-     * @return string
      *
      * @see \Swift_Message::getReplyTo()
      */
@@ -148,14 +140,12 @@ class Message
      * If $name is passed and the first parameter is a string, this name will be
      * associated with the address.
      *
-     * @param string|array $email
+     * @param string|array<int|string, string> $email
      * @param string|null $name optional
-     *
-     * @return $this
      *
      * @see \Swift_Message::setTo()
      */
-    public function to(string|array $email, ?string $name = null): self
+    public function to($email, ?string $name = null): self
     {
         $email = $this->normalizeEmail($email);
 
@@ -167,7 +157,7 @@ class Message
     /**
      * Get the To addresses of this message.
      *
-     * @return array
+     * @return array<int|string, string>
      *
      * @see \Swift_Message::getTo()
      */
@@ -185,14 +175,14 @@ class Message
      * If $name is passed and the first parameter is a string, this name will be
      * associated with the address.
      *
-     * @param string|array $email
+     * @param string|array<int|string, string> $email
      * @param string|null $name optional
      *
      * @return $this
      *
      * @see \Swift_Message::setCc()
      */
-    public function cc(string|array $email, ?string $name = null): self
+    public function cc($email, ?string $name = null): self
     {
         $email = $this->normalizeEmail($email);
 
@@ -204,7 +194,7 @@ class Message
     /**
      * Get the Cc address of this message.
      *
-     * @return array
+     * @return array<int|string, string>
      *
      * @see \Swift_Message::getCc()
      */
@@ -222,14 +212,12 @@ class Message
      * If $name is passed and the first parameter is a string, this name will be
      * associated with the address.
      *
-     * @param string|array $email
+     * @param string|array<int|string, string> $email
      * @param string|null $name optional
-     *
-     * @return $this
      *
      * @see \Swift_Message::setBcc()
      */
-    public function bcc(string|array $email, ?string $name = null): self
+    public function bcc($email, ?string $name = null): self
     {
         $email = $this->normalizeEmail($email);
 
@@ -241,7 +229,7 @@ class Message
     /**
      * Get the Bcc addresses of this message.
      *
-     * @return array
+     * @return array<int|string, string>
      *
      * @see \Swift_Message::getBcc()
      */
@@ -255,14 +243,12 @@ class Message
      *
      * This does not override the From field, but it has a higher significance.
      *
-     * @param string|array $email
+     * @param string|array<string|int, string> $email
      * @param string|null $name optional
-     *
-     * @return $this
      *
      * @see \Swift_Message::setSender()
      */
-    public function sender(string|array $email, ?string $name = null): self
+    public function sender($email, ?string $name = null): self
     {
         $emails = $this->normalizeEmail($email);
 
@@ -276,8 +262,6 @@ class Message
     /**
      * Get the sender of this message.
      *
-     * @return string
-     *
      * @see \Swift_Message::getSender()
      */
     public function getSender(): string
@@ -289,8 +273,6 @@ class Message
      * Set the subject of this message.
      *
      * @param string $subject
-     *
-     * @return $this
      *
      * @see \Swift_Message::setSubject()
      */
@@ -304,11 +286,9 @@ class Message
     /**
      * Get the subject of this message.
      *
-     * @return string
-     *
      * @see \Swift_Message::getSubject()
      */
-    public function getSubject():string
+    public function getSubject(): string
     {
         return $this->getMessage()->getSubject();
     }
@@ -317,15 +297,13 @@ class Message
      * Set the body of this message, either as a string, or as an instance of
      * {@link \Swift_OutputByteStream}.
      *
-     * @param mixed $content
+     * @param string|\Swift_OutputByteStream $content
      * @param string $contentType optional
      * @param string|null $charset     optional
      *
-     * @return $this
-     *
      * @see \Swift_Message::setBody()
      */
-    public function content(mixed $content, string $contentType = self::CONTENT_TYPE_HTML, ?string $charset = null): self
+    public function content($content, string $contentType = self::CONTENT_TYPE_HTML, ?string $charset = null): self
     {
         $this->getMessage()->setBody($content, $contentType, $charset);
 
@@ -350,8 +328,6 @@ class Message
      * @param string $content
      * @param string|null $contentType optional
      * @param string|null $charset optional
-     *
-     * @return $this
      */
     public function contentAlternative(string $content, ?string $contentType = null, ?string $charset = null): self
     {
@@ -364,8 +340,6 @@ class Message
      * Set the Content-type of this message.
      *
      * @param string $contentType
-     *
-     * @return $this
      *
      * @see \Swift_Message::setContentType()
      */
@@ -392,8 +366,6 @@ class Message
      * Set the character set of this message.
      *
      * @param string $charset
-     *
-     * @return $this
      *
      * @see \Swift_Message::setCharset()
      */
@@ -452,9 +424,7 @@ class Message
     /**
      * Ask for a delivery receipt from the recipient to be sent to $addresses
      *
-     * @param array $email
-     *
-     * @return $this
+     * @param array<int|string, string> $email
      *
      * @see \Swift_Message::setReadReceiptTo()
      */
@@ -470,7 +440,7 @@ class Message
     /**
      * An array of email which failed send to recipients.
      *
-     * @return array
+     * @return array<int, string>
      */
     public function getFailedRecipients(): array
     {
@@ -479,8 +449,6 @@ class Message
 
     /**
      * Get the addresses to which a read-receipt will be sent.
-     *
-     * @return string
      *
      * @see \Swift_Message::getReadReceiptTo()
      */
@@ -494,8 +462,6 @@ class Message
      *
      * @param string $email
      *
-     * @return $this
-     *
      * @see \Swift_Message::setReturnPath()
      */
     public function setReturnPath(string $email): self
@@ -507,8 +473,6 @@ class Message
 
     /**
      * Get the return-path (bounce address) of this message.
-     *
-     * @return string
      *
      * @see \Swift_Message::getReturnPath()
      */
@@ -522,8 +486,6 @@ class Message
      *
      * @param string $format
      *
-     * @return Message
-     *
      * @see \Swift_Message::setFormat()
      */
     public function setFormat(string $format): self
@@ -535,8 +497,6 @@ class Message
 
     /**
      * Get the format of this message (i.e. flowed or fixed).
-     *
-     * @return string
      *
      * @see \Swift_Message::getFormat()
      */
@@ -552,10 +512,8 @@ class Message
      * - mailer:beforeAttachFile
      * - mailer:afterAttachFile
      *
-     * @param  string $file
-     * @param  array $options optional
-     *
-     * @return $this
+     * @param string $file
+     * @param array<string, string> $options optional
      *
      * @see Phalcon\Mailer\Message::createAttachmentViaPath()
      * @see Phalcon\Mailer\Message::prepareAttachment()
@@ -570,16 +528,14 @@ class Message
     /**
      * Attach in-memory data as an attachment.
      *
-     * @param  string $data
-     * @param  string $name
-     * @param  array $options optional
-     *
-     * @return Message
+     * @param string $data
+     * @param string $name
+     * @param array<string, string> $options optional
      *
      * @see Phalcon\Mailer\Message::createAttachmentViaData()
      * @see Phalcon\Mailer\Message::prepareAttachment()
      */
-    public function attachmentData(string $data, string $name, array $options = []): Message
+    public function attachmentData(string $data, string $name, array $options = []): self
     {
         $attachment = $this->createAttachmentViaData($data, $name);
 
@@ -603,13 +559,10 @@ class Message
     /**
      * Embed in-memory data in the message and get the CID.
      *
-     * @param  string $data
-     * @param  string $name
-     * @param  string $contentType
-     *
-     * @return string
+     * @param string $data
+     * @param string $name
      */
-    public function embedData(string $data, string $name, ?string $contentType = null): string
+    public function embedData(string $data, string $name): string
     {
         $embed = $this->createEmbedViaData($data, $name);
 
@@ -618,8 +571,6 @@ class Message
 
     /**
      * Return a {@link \Swift_Message} instance
-     *
-     * @return \Swift_Message
      */
     public function getMessage(): \Swift_Message
     {
@@ -655,11 +606,9 @@ class Message
      * - mailer:beforeSend
      * - mailer:afterSend
      *
-     * @return int | bool
-     *
      * @see \Swift_Mailer::send()
      */
-    public function send(): int|bool
+    public function send(): int
     {
         $eventManager = $this->getManager()->getEventsManager();
 
@@ -686,7 +635,7 @@ class Message
                 $this,
                 [
                     $count,
-                    $this->failedRecipients,
+                    $this->failedRecipients
                 ]
             );
         }
@@ -697,10 +646,8 @@ class Message
     /**
      * Prepare and attach the given attachment.
      *
-     * @param  \Swift_Attachment $attachment
-     * @param  array $options optional
-     *
-     * @return $this
+     * @param \Swift_Attachment $attachment
+     * @param array<string, string> $options optional
      *
      * @see \Swift_Message::attach()
      */
@@ -750,8 +697,6 @@ class Message
      *
      * @param string $file
      *
-     * @return \Swift_Attachment
-     *
      * @see \Swift_Attachment::fromPath()
      */
     protected function createAttachmentViaPath(string $file): \Swift_Attachment
@@ -760,7 +705,7 @@ class Message
         $byteStream = $this->getManager()->getDI()->get(
             '\Swift_ByteStream_FileByteStream',
             [
-                $file,
+                $file
             ]
         );
 
@@ -787,7 +732,7 @@ class Message
             '\Swift_Attachment',
             [
                 $data,
-                $name,
+                $name
             ]
         );
     }
@@ -797,8 +742,6 @@ class Message
      *
      * @param string $file
      *
-     * @return \Swift_Image
-     *
      * @see \Swift_Image::fromPath()
      */
     protected function createEmbedViaPath(string $file): \Swift_Image
@@ -807,7 +750,7 @@ class Message
         $byteStream = $this->getManager()->getDI()->get(
             '\Swift_ByteStream_FileByteStream',
             [
-                $file,
+                $file
             ]
         );
 
@@ -824,8 +767,6 @@ class Message
      * @param string $data
      * @param string|null $name optional
      *
-     * @return \Swift_Image
-     *
      * @see \Swift_Image::newInstance()
      */
     protected function createEmbedViaData(string $data, ?string $name = null): \Swift_Image
@@ -834,7 +775,7 @@ class Message
             '\Swift_Image',
             [
                 $data,
-                $name,
+                $name
             ]
         );
     }
@@ -842,11 +783,11 @@ class Message
     /**
      * Normalize IDN domains.
      *
-     * @param string|array|\Traversable $email
+     * @param string|array<int|string, string>|\Traversable $email
      *
-     * @return array
+     * @return array<int|string, string>
      */
-    protected function normalizeEmail(string|array|\Traversable $email): array
+    protected function normalizeEmail($email): array
     {
         $emails = [];
 
