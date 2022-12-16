@@ -44,7 +44,7 @@ final class ManagerSendmailCest
 
         $this->di->set(
             'simple',
-            function () {
+            function () use ($helper) {
                 $view = new Simple();
 
                 $view->setViewsDir($helper->dirSeparator(
@@ -56,31 +56,34 @@ final class ManagerSendmailCest
             true
         );
 
-        $this->di->setShared('view', function () {
-            $view = new View();
-            $view->setDI($this);
-            $view->setViewsDir($helper->dirSeparator(
-                codecept_data_dir() . 'fixtures/views'
-            ));
+        $this->di->setShared('view',
+            function () use ($helper) {
+                $view = new View();
 
-            $view->registerEngines([
-                '.volt'  => function ($view) {
+                $view->setDI($this);
+                $view->setViewsDir($helper->dirSeparator(
+                    codecept_data_dir() . 'fixtures/views'
+                ));
 
-                    $volt = new VoltEngine($view, $this);
+                $view->registerEngines([
+                    '.volt'  => function ($view) {
 
-                    $volt->setOptions([
-                        'path'      => codecept_output_dir(),
-                        'separator' => '_'
-                    ]);
+                        $volt = new VoltEngine($view, $this);
 
-                    return $volt;
-                },
-                '.phtml' => PhpEngine::class
+                        $volt->setOptions([
+                            'path'      => codecept_output_dir(),
+                            'separator' => '_'
+                        ]);
 
-            ]);
+                        return $volt;
+                    },
+                    '.phtml' => PhpEngine::class
 
-            return $view;
-        });
+                ]);
+
+                return $view;
+            }
+        );
 
         $this->baseUrl = sprintf("%s%s:%s/api/v1/", getenv('DATA_MAILHOG_HOST_PROTOCOL'), getenv('DATA_MAILHOG_HOST_URI'), getenv('DATA_MAILHOG_API_PORT'));
     }

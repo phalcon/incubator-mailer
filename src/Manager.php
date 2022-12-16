@@ -22,7 +22,7 @@ namespace Phalcon\Incubator\Mailer;
 use Phalcon\DI\Injectable;
 use Phalcon\Events\EventsAwareInterface;
 use Phalcon\Events\ManagerInterface;
-use Phalcon\Mvc\View;
+use \Phalcon\Mvc\View\Simple;
 
 /**
  * Class Manager
@@ -58,7 +58,7 @@ class Manager extends Injectable implements EventsAwareInterface
     /**
      * @var \Phalcon\Mvc\View\Simple
      */
-    protected \Phalcon\Mvc\View\Simple $view;
+    protected Simple $view;
 
     /**
      * @var array
@@ -395,7 +395,7 @@ class Manager extends Injectable implements EventsAwareInterface
      *
      * @return \Phalcon\Mvc\View\Simple
      */
-    protected function getView(): \Phalcon\Mvc\View\Simple
+    protected function getView(): Simple
     {
         if (empty($this->view)) {
             /** @var \Phalcon\Mvc\View $viewApp */
