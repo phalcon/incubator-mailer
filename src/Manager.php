@@ -19,7 +19,7 @@
 
 namespace Phalcon\Incubator\Mailer;
 
-use Phalcon\DI\Injectable;
+use Phalcon\Di\Injectable;
 use Phalcon\Events\EventsAwareInterface;
 use Phalcon\Events\ManagerInterface;
 use Phalcon\Mvc\View\Simple;
@@ -41,7 +41,7 @@ use Phalcon\Mvc\View\Simple;
 class Manager extends Injectable implements EventsAwareInterface
 {
     /**
-     * @var array<string, int|string|array<string|int, string>>
+     * @var array<string, mixed>
      */
     protected array $config = [];
 
@@ -49,7 +49,7 @@ class Manager extends Injectable implements EventsAwareInterface
 
     protected \Swift_Mailer $mailer;
 
-    protected Simple $view;
+    protected ?Simple $view = null;
 
     /**
      * @var array<string, string>
@@ -287,7 +287,7 @@ class Manager extends Injectable implements EventsAwareInterface
      * @param string $key
      * @param string $default
      *
-     * @return string|array|null
+     * @return string|array<string, mixed>|null
      */
     protected function getConfig(?string $key = null, ?string $default = null)
     {
@@ -377,32 +377,32 @@ class Manager extends Injectable implements EventsAwareInterface
 
     /**
      * Return a {@link \Phalcon\Mvc\View\Simple} instance
-     *
-     * @return \Phalcon\Mvc\View\Simple
      */
     protected function getView(): Simple
     {
-        if (empty($this->view)) {
-            /** @var \Phalcon\Mvc\View $viewApp */
-            $viewApp = $this->getDI()->get('view');
-
-            if (!($viewsDir = $this->getConfig('viewsDir'))) {
-                $viewsDir = $viewApp->getViewsDir();
-            }
-
-            /** @var \Phalcon\Mvc\View\Simple $view */
-            $view = $this->getDI()->get('\Phalcon\Mvc\View\Simple');
-
-            if (is_string($viewsDir)) {
-                $view->setViewsDir($viewsDir);
-            }
-
-            if ($this->viewEngines) {
-                $view->registerEngines($this->viewEngines);
-            }
-
-            $this->view = $view;
+        if ($this->view) {
+            return $this->view;
         }
+
+        /** @var \Phalcon\Mvc\View $viewApp */
+        $viewApp = $this->getDI()->get('view');
+
+        if (!($viewsDir = $this->getConfig('viewsDir'))) {
+            $viewsDir = $viewApp->getViewsDir();
+        }
+
+        /** @var \Phalcon\Mvc\View\Simple $view */
+        $view = $this->getDI()->get('\Phalcon\Mvc\View\Simple');
+
+        if (is_string($viewsDir)) {
+            $view->setViewsDir($viewsDir);
+        }
+
+        if ($this->viewEngines) {
+            $view->registerEngines($this->viewEngines);
+        }
+
+        $this->view = $view;
 
         return $this->view;
     }
