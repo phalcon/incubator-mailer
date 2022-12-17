@@ -38,15 +38,9 @@ class Message
      */
     public const CONTENT_TYPE_HTML = 'text/html';
 
-    /**
-     * @var \Phalcon\Incubator\Mailer\Manager
-     */
     protected Manager $manager;
 
-    /**
-     * @var \Swift_Message
-     */
-    protected \Swift_Message $message;
+    protected ?\Swift_Message $message = null;
 
     /**
      * An array of email which failed send to recipients.
@@ -574,7 +568,7 @@ class Message
      */
     public function getMessage(): \Swift_Message
     {
-        if (empty($this->message)) {
+        if (!$this->message) {
             $this->message = $this->getManager()->getSwift()->createMessage();
         }
 
@@ -619,7 +613,7 @@ class Message
         }
 
         if ($result === false) {
-            return false;
+            return 0;
         }
 
         $this->failedRecipients = [];
