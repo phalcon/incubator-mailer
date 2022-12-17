@@ -43,6 +43,11 @@
         "phpstan/phpstan": "^0.12.18",
         "vlucas/phpdotenv": "^2.5"
     },
+    "config": {
+        "platform": {
+            "php": "7.4"
+        }
+    },
     "autoload": {
         "psr-4": {
             "Phalcon\\Incubator\\Mailer\\": "src/"
