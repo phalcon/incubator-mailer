@@ -62,6 +62,9 @@ class Manager extends Injectable implements EventsAwareInterface
      * Create a new MailerManager component using $config for configuring
      *
      * @param array<string, string|array<string|int, string>> $config
+     *
+     * @throws \Phalcon\Di\Exception If a DI has not been created
+     * @throws \InvalidArgumentException If the driver has been set or not available by the manager
      */
     public function __construct(array $config)
     {
@@ -84,8 +87,6 @@ class Manager extends Injectable implements EventsAwareInterface
      * Events:
      * - mailer:beforeCreateMessage
      * - mailer:afterCreateMessage
-     *
-     * @return Message
      */
     public function createMessage(): Message
     {
@@ -109,6 +110,8 @@ class Manager extends Injectable implements EventsAwareInterface
                 $from['email'],
                 isset($from['name']) ? $from['name'] : null
             );
+        } elseif (is_string($from)) {
+            $message->from($from);
         }
 
         if ($eventsManager) {
@@ -150,6 +153,14 @@ class Manager extends Injectable implements EventsAwareInterface
     public function getSwift(): \Swift_Mailer
     {
         return $this->mailer;
+    }
+
+    /**
+     * Return a {@link \Swift_Transport} instance, either SMTP or Sendmail
+     */
+    public function getTransport(): \Swift_Transport
+    {
+        return $this->transport;
     }
 
     /**
@@ -202,11 +213,18 @@ class Manager extends Injectable implements EventsAwareInterface
      * Supported driver-mail:
      * - smtp
      * - sendmail
-     * - mail
+     *
+     * @throws \InvalidArgumentException If the driver is not a string value or not supported by the manager
      */
     protected function registerSwiftTransport(): void
     {
-        switch ($driver = $this->getConfig('driver')) {
+        $driver = $this->getConfig('driver');
+
+        if (!is_string($driver)) {
+            throw new \InvalidArgumentException('Driver must be a string value set from the config');
+        }
+
+        switch ($driver) {
             case 'smtp':
                 $this->transport = $this->registerTransportSmtp();
                 break;
@@ -216,21 +234,7 @@ class Manager extends Injectable implements EventsAwareInterface
                 break;
 
             default:
-                if (is_string($driver)) {
-                    throw new \InvalidArgumentException(
-                        sprintf(
-                            'Driver-mail "%s" is not supported',
-                            $driver
-                        )
-                    );
-                } elseif (is_array($driver)) {
-                    throw new \InvalidArgumentException(
-                        sprintf(
-                            'Driver-mail "%s" is not supported',
-                            json_encode($driver)
-                        )
-                    );
-                }
+                throw new \InvalidArgumentException("Driver-mail '$driver' is not supported");
         }
     }
 
