@@ -182,7 +182,7 @@ class Manager extends Injectable implements EventsAwareInterface
     }
 
     /**
-     * set value of $viewEngines
+     * Add view engines to the manager
      *
      * @param array<string, string> $engines
      */
@@ -314,7 +314,9 @@ class Manager extends Injectable implements EventsAwareInterface
         if (function_exists('idn_to_ascii')) {
             return idn_to_ascii($str);
         } else {
+            // @codeCoverageIgnoreStart
             return $str;
+            // @codeCoverageIgnoreEnd
         }
     }
 

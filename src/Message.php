@@ -86,8 +86,10 @@ class Message
      * Get the from address of this message.
      *
      * @see \Swift_Message::getFrom()
+     *
+     * @return array<string, ?string>
      */
-    public function getFrom(): string
+    public function getFrom(): array
     {
         return $this->getMessage()->getFrom();
     }
@@ -246,8 +248,12 @@ class Message
     {
         $emails = $this->normalizeEmail($email);
 
-        foreach ($emails as $email) {
-            $this->getMessage()->setSender($email, $name);
+        if (is_array($emails)) {
+            foreach ($emails as $email) {
+                $this->getMessage()->setSender($email, $name);
+            }
+        } else {
+            $this->getMessage()->setSender($emails, $name);
         }
 
         return $this;
@@ -425,6 +431,10 @@ class Message
     public function setReadReceiptTo(array $email): self
     {
         $email = $this->normalizeEmail($email);
+
+        if (is_string($email)) {
+            $email = [$email];
+        }
 
         $this->getMessage()->setReadReceiptTo($email);
 
@@ -779,9 +789,9 @@ class Message
      *
      * @param string|array<int|string, string>|\Traversable $email
      *
-     * @return array<int|string, string>
+     * @return array<int|string, string>|string
      */
-    protected function normalizeEmail($email): array
+    protected function normalizeEmail($email)
     {
         $emails = [];
 
@@ -798,8 +808,7 @@ class Message
 
             return $emails;
         } else {
-            $emails[] = $this->getManager()->normalizeEmail($email);
-            return $emails;
+            return $this->getManager()->normalizeEmail($email);
         }
     }
 }
