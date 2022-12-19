@@ -171,7 +171,7 @@ final class ManagerSMTPCest
         $dataMail = file_get_contents($this->baseUrl . 'messages', false, $context);
         $dataMail = \json_decode($dataMail);
 
-        //Check that there are one mail send
+        // Check that there are one mail send
         $I->assertCount(2, $dataMail);
 
         $mail = $dataMail[0];
@@ -190,7 +190,7 @@ final class ManagerSMTPCest
         $I->assertEquals($body, $mail->Content->Body);
         $I->assertStringContainsString('Subject: ' . $subject, $mail->Raw->Data);
 
-        // Clean emails
+        // Clean emails sent from MailHog
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $this->baseUrl . 'messages');
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
@@ -199,8 +199,5 @@ final class ManagerSMTPCest
 
         curl_close($ch);
         $I->assertEquals(200, $httpCode);
-
-
-
     }
 }

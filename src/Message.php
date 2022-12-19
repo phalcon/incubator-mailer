@@ -118,11 +118,13 @@ class Message
     }
 
     /**
-     * Get the reply-to address of this message.
+     * Get the reply-to address of this message (null or array).
      *
      * @see \Swift_Message::getReplyTo()
+     *
+     * @return string
      */
-    public function getReplyTo(): string
+    public function getReplyTo()
     {
         return $this->getMessage()->getReplyTo();
     }
@@ -157,7 +159,7 @@ class Message
      *
      * @see \Swift_Message::getTo()
      */
-    public function getTo(): array
+    public function getTo(): ?array
     {
         return $this->getMessage()->getTo();
     }
@@ -190,11 +192,11 @@ class Message
     /**
      * Get the Cc address of this message.
      *
-     * @return array<int|string, string>
+     * @return ?array<int|string, string>
      *
      * @see \Swift_Message::getCc()
      */
-    public function getCc(): array
+    public function getCc(): ?array
     {
         return $this->getMessage()->getCc();
     }
@@ -225,46 +227,44 @@ class Message
     /**
      * Get the Bcc addresses of this message.
      *
-     * @return array<int|string, string>
+     * @return ?array<int|string, string>
      *
      * @see \Swift_Message::getBcc()
      */
-    public function getBcc(): array
+    public function getBcc(): ?array
     {
         return $this->getMessage()->getBcc();
     }
 
     /**
-     * Set the sender of this message.
+     * Set one sender of this message.
      *
      * This does not override the From field, but it has a higher significance.
      *
-     * @param string|array<string|int, string> $email
+     * @param string $email
      * @param string|null $name optional
      *
      * @see \Swift_Message::setSender()
      */
-    public function sender($email, ?string $name = null): self
+    public function sender(string $email, ?string $name = null): self
     {
-        $emails = $this->normalizeEmail($email);
+        $email = $this->normalizeEmail($email);
 
-        if (is_array($emails)) {
-            foreach ($emails as $email) {
-                $this->getMessage()->setSender($email, $name);
-            }
-        } else {
-            $this->getMessage()->setSender($emails, $name);
+        if (is_string($email)) {
+            $this->getMessage()->setSender($email, $name);
         }
 
         return $this;
     }
 
     /**
-     * Get the sender of this message.
+     * Get the sender of this message (null or array).
      *
      * @see \Swift_Message::getSender()
+     *
+     * @return string
      */
-    public function getSender(): string
+    public function getSender()
     {
         return $this->getMessage()->getSender();
     }
@@ -288,7 +288,7 @@ class Message
      *
      * @see \Swift_Message::getSubject()
      */
-    public function getSubject(): string
+    public function getSubject(): ?string
     {
         return $this->getMessage()->getSubject();
     }
@@ -313,11 +313,9 @@ class Message
     /**
      * Get the body of this message as a string.
      *
-     * @return string
-     *
      * @see \Swift_Message::getBody()
      */
-    public function getContent(): string
+    public function getContent(): ?string
     {
         return $this->getMessage()->getBody();
     }
@@ -432,11 +430,9 @@ class Message
     {
         $email = $this->normalizeEmail($email);
 
-        if (is_string($email)) {
-            $email = [$email];
+        if (is_array($email)) {
+            $this->getMessage()->setReadReceiptTo($email);
         }
-
-        $this->getMessage()->setReadReceiptTo($email);
 
         return $this;
     }
@@ -452,11 +448,13 @@ class Message
     }
 
     /**
-     * Get the addresses to which a read-receipt will be sent.
+     * Get the addresses to which a read-receipt will be sent (null or array).
      *
      * @see \Swift_Message::getReadReceiptTo()
+     *
+     * @return string
      */
-    public function getReadReceiptTo(): string
+    public function getReadReceiptTo()
     {
         return $this->getMessage()->getReadReceiptTo();
     }
@@ -480,7 +478,7 @@ class Message
      *
      * @see \Swift_Message::getReturnPath()
      */
-    public function getReturnPath(): string
+    public function getReturnPath(): ?string
     {
         return $this->getMessage()->getReturnPath();
     }
@@ -506,7 +504,7 @@ class Message
      */
     public function getFormat(): string
     {
-        return $this->getMessage()->getFormat();
+        return $this->getMessage()->getFormat() ?: '';
     }
 
     /**
@@ -549,9 +547,7 @@ class Message
     /**
      * Embed a file in the message and get the CID.
      *
-     * @param  string $file
-     *
-     * @return string
+     * @param string $file
      */
     public function embed(string $file): string
     {
@@ -798,11 +794,9 @@ class Message
         if (is_array($email) || $email instanceof \Traversable) {
             foreach ($email as $k => $v) {
                 if (is_int($k)) {
-                    $emails[$k] = $this->getManager()->normalizeEmail($v);
+                    $emails[$this->getManager()->normalizeEmail($v)] = null;
                 } else {
-                    $k = $this->getManager()->normalizeEmail($k);
-
-                    $emails[$k] = $v;
+                    $emails[$this->getManager()->normalizeEmail($k)] = $v;
                 }
             }
 
