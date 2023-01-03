@@ -17,6 +17,8 @@ use Phalcon\Events\Event;
 use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Incubator\Mailer\Manager;
 use Phalcon\Incubator\Mailer\Message;
+use PHPMailer\PHPMailer\Exception as PHPMailerException;
+use PHPMailer\PHPMailer\PHPMailer;
 
 class MessageTest extends AbstractUnit
 {
@@ -28,22 +30,22 @@ class MessageTest extends AbstractUnit
         $manager = new Manager(['driver' => 'smtp']);
         $message = new Message($manager);
 
-        $this->assertNull($message->getBcc());
-        $this->assertNull($message->getCc());
-        $this->assertSame('utf-8', $message->getCharset());
-        $this->assertNull($message->getContent());
+        $this->assertSame([], $message->getBcc());
+        $this->assertSame([], $message->getCc());
+        $this->assertSame(PHPMailer::CHARSET_ISO88591, $message->getCharset());
+        $this->assertSame('', $message->getContent());
         $this->assertSame('text/plain', $message->getContentType());
         $this->assertSame([], $message->getFailedRecipients());
         $this->assertSame('', $message->getFormat());
-        $this->assertSame([], $message->getFrom());
-        $this->assertSame(3, $message->getPriority());
+        $this->assertSame('', $message->getFrom());
+        $this->assertSame(null, $message->getPriority());
         $this->assertSame($manager, $message->getManager());
-        $this->assertNull($message->getReadReceiptTo());
-        $this->assertNull($message->getReplyTo());
-        $this->assertNull($message->getReturnPath());
-        $this->assertNull($message->getSender());
-        $this->assertNull($message->getSubject());
-        $this->assertNull($message->getTo());
+        $this->assertSame('', $message->getReadReceiptTo());
+        $this->assertSame([], $message->getReplyTo());
+        $this->assertSame('', $message->getReturnPath());
+        $this->assertSame('', $message->getSender());
+        $this->assertSame('', $message->getSubject());
+        $this->assertSame([], $message->getTo());
     }
 
     /**
@@ -54,38 +56,68 @@ class MessageTest extends AbstractUnit
         $manager = new Manager(['driver' => 'smtp']);
         $message = new Message($manager);
 
-        $message->setFormat('flowed');
-        $this->assertSame('flowed', $message->getFormat());
-
-        $message->setReadReceiptTo(['test@test.com']);
-        $this->assertSame(['test@test.com' => null], $message->getReadReceiptTo());
-
-        $message->setReturnPath('test@test.com');
-        $this->assertSame('test@test.com', $message->getReturnPath());
+        $message->setReadReceiptTo('test-receipt@test.com');
+        $this->assertSame('test-receipt@test.com', $message->getReadReceiptTo());
 
         $message->bcc('johndoe@test.com', 'John Doe');
         $this->assertSame(['johndoe@test.com' => 'John Doe'], $message->getBcc());
 
-        $message->cc('johndoe@test2.com', 'John Doe');
-        $this->assertSame(['johndoe@test2.com' => 'John Doe'], $message->getCc());
+        // multiple BCC
+        $message->bcc(['johndoe2@test.com', 'johndoe3@test.com' => 'John Doe 3']);
+        $this->assertSame([
+            'johndoe@test.com'  => 'John Doe',
+            'johndoe2@test.com' => '',
+            'johndoe3@test.com' => 'John Doe 3'
+        ], $message->getBcc());
 
-        $message->from(['johndoe@test3.com' => 'John Doe']);
-        $this->assertSame(['johndoe@test3.com' => 'John Doe'], $message->getFrom());
+        $message->cc('johndoe4@test.com', 'John Doe');
+        $this->assertSame(['johndoe4@test.com' => 'John Doe'], $message->getCc());
+
+        // multiple CC
+        $message->cc(['johndoe5@test.com' => 'John Doe 2', 'johndoe6@test.com']);
+        $this->assertSame([
+            'johndoe4@test.com'  => 'John Doe',
+            'johndoe5@test.com' => 'John Doe 2',
+            'johndoe6@test.com' => ''
+        ], $message->getCc());
+
+        $message->replyTo(['johndoe7@test.com' => 'John Doe 7']);
+        $this->assertSame(['johndoe7@test.com' => 'John Doe 7'], $message->getReplyTo());
+
+        // multiple Reply-To
+        $message->replyTo(['johndoe8@test.com' => 'John Doe 8', 'johndoe9@test.com']);
+        $this->assertSame([
+            'johndoe7@test.com' => 'John Doe 7',
+            'johndoe8@test.com' => 'John Doe 8',
+            'johndoe9@test.com' => ''
+        ], $message->getReplyTo());
+
+        $message->from('johndoe-from@test.com', 'John Doe');
+        $this->assertSame('johndoe-from@test.com', $message->getFrom());
+        $this->assertSame('John Doe', $message->getFromName());
 
         $message->priority(5);
         $this->assertSame(5, $message->getPriority());
 
-        $message->replyTo(['johndoe@test4.com' => 'John Doe']);
-        $this->assertSame(['johndoe@test4.com' => 'John Doe'], $message->getReplyTo());
-
         $message->sender('johndoe@test5.com');
-        $this->assertSame(['johndoe@test5.com' => null], $message->getSender());
+        $this->assertSame('johndoe@test5.com', $message->getSender());
+
+        $message->setReturnPath('test-return@test.com');
+        $this->assertSame('test-return@test.com', $message->getReturnPath());
 
         $message->subject('Test Subject');
         $this->assertSame('Test Subject', $message->getSubject());
 
         $message->to('test@to.com');
-        $this->assertSame(['test@to.com' => null], $message->getTo());
+        $this->assertSame(['test@to.com' => ''], $message->getTo());
+
+        // multiple To
+        $message->to(['test2@to.com' => 'Test 2', 'test3@to.com'], 'Name of To');
+        $this->assertSame([
+            'test@to.com'  => '',
+            'test2@to.com' => 'Test 2',
+            'test3@to.com' => 'Name of To'
+        ], $message->getTo());
     }
 
     /**
@@ -122,16 +154,7 @@ class MessageTest extends AbstractUnit
 
             $this->assertInstanceOf(Event::class, func_get_arg(0)); // the event
             $this->assertInstanceOf(Message::class, func_get_arg(1)); // the mailer manager
-
-            $this->assertIsArray(func_get_arg(2));
-            $this->assertCount(1, func_get_arg(2));
-
-            /** @var \Swift_Attachment $attachment */
-            $attachment = func_get_arg(2)[0];
-            $this->assertInstanceOf(\Swift_Attachment::class, $attachment); // the attachment
-
-            $this->assertSame('the data of file.txt', $attachment->getBody());
-            $this->assertSame('file.txt', $attachment->getFilename());
+            $this->assertNull(func_get_arg(2));
 
             return false;
         });
@@ -143,13 +166,59 @@ class MessageTest extends AbstractUnit
         $manager->setEventsManager($eventsManager);
         $message->attachment(codecept_data_dir('fixtures/attachments/file.txt'));
 
-        $this->assertSame(8, $this->getCount());
+        $this->assertSame(4, $this->getCount());
+        $this->assertEmpty($message->getMessage()->getAttachments());
+    }
 
-        // with no eventsManager
+    /**
+     * @test Test adding attachment from files
+     */
+    public function testAttachmentWithNoEventSuccess(): void
+    {
         $manager = new Manager(['driver' => 'smtp']);
         $message = new Message($manager);
 
-        $message->attachment(codecept_data_dir('fixtures/attachments/file.txt'));
+        $filePath = codecept_data_dir('fixtures/attachments/file.txt');
+
+        // we add an attachment by a file
+        $message->attachment($filePath);
+
+        $this->assertCount(1, $attachments = $message->getMessage()->getAttachments());
+        $this->assertArrayHasKey(0, $attachments);
+        $this->assertIsArray($attachments[0]);
+
+        $this->assertSame([
+            $filePath,
+            'file.txt',
+            'file.txt',
+            'base64',
+            'text/plain',
+            false,
+            'attachment',
+            'file.txt'
+        ], $attachments[0]);
+
+        // we add another one with options set
+        $message->attachment($filePath, [
+            'encoding' => '7bit',
+            'mime'     => 'application/pdf',
+            'as'       => 'new-name.pdf'
+        ]);
+
+        $this->assertCount(2, $attachments = $message->getMessage()->getAttachments());
+        $this->assertArrayHasKey(1, $attachments);
+        $this->assertIsArray($attachments[1]);
+
+        $this->assertSame([
+            $filePath,
+            'file.txt',
+            'new-name.pdf',
+            '7bit',
+            'application/pdf',
+            false,
+            'attachment',
+            'new-name.pdf'
+        ], $attachments[1]);
     }
 
     /**
@@ -166,16 +235,7 @@ class MessageTest extends AbstractUnit
 
             $this->assertInstanceOf(Event::class, func_get_arg(0)); // the event
             $this->assertInstanceOf(Message::class, func_get_arg(1)); // the mailer manager
-
-            $this->assertIsArray(func_get_arg(2));
-            $this->assertCount(1, func_get_arg(2));
-
-            /** @var \Swift_Attachment $attachment */
-            $attachment = func_get_arg(2)[0];
-            $this->assertInstanceOf(\Swift_Attachment::class, $attachment); // the attachment
-
-            $this->assertSame('the data of file.txt', $attachment->getBody());
-            $this->assertSame('file.txt', $attachment->getFilename());
+            $this->assertNull(func_get_arg(2));
         });
 
         $eventsManager->attach('mailer:afterAttachFile', function () {
@@ -183,22 +243,14 @@ class MessageTest extends AbstractUnit
 
             $this->assertInstanceOf(Event::class, func_get_arg(0)); // the event
             $this->assertInstanceOf(Message::class, func_get_arg(1)); // the mailer manager
-
-            $this->assertIsArray(func_get_arg(2));
-            $this->assertCount(1, func_get_arg(2));
-
-            /** @var \Swift_Attachment $attachment */
-            $attachment = func_get_arg(2)[0];
-            $this->assertInstanceOf(\Swift_Attachment::class, $attachment); // the attachment
-
-            $this->assertSame('the data of file.txt', $attachment->getBody());
-            $this->assertSame('file.txt', $attachment->getFilename());
+            $this->assertNull(func_get_arg(2));
         });
 
         $manager->setEventsManager($eventsManager);
         $message->attachment(codecept_data_dir('fixtures/attachments/file.txt'));
 
-        $this->assertSame(16, $this->getCount(), 'the events for attachments have not been fired');
+        $this->assertSame(8, $this->getCount(), 'the events for attachments have not been fired');
+        $this->assertCount(1, $message->getMessage()->getAttachments());
     }
 
     /**
@@ -209,58 +261,92 @@ class MessageTest extends AbstractUnit
         $manager = new Manager(['driver' => 'smtp']);
         $message = new Message($manager);
 
-        // attachmentWithData with no option
+        // attachmentData with no option
         $eventsManager = new EventsManager();
         $eventsManager->attach('mailer:beforeAttachFile', function () {
             $this->assertSame(3, func_num_args());
 
             $this->assertInstanceOf(Event::class, func_get_arg(0)); // the event
             $this->assertInstanceOf(Message::class, func_get_arg(1)); // the mailer manager
-
-            $this->assertIsArray(func_get_arg(2));
-            $this->assertCount(1, func_get_arg(2));
-
-            /** @var \Swift_Attachment $attachment */
-            $attachment = func_get_arg(2)[0];
-            $this->assertInstanceOf(\Swift_Attachment::class, $attachment); // the attachment
-
-            $this->assertSame('data of the attachment', $attachment->getBody());
-            $this->assertSame('name-of-file.txt', $attachment->getFilename());
+            $this->assertNull(func_get_arg(2));
         });
 
         $manager->setEventsManager($eventsManager);
         $message->attachmentData('data of the attachment', 'name-of-file.txt');
 
-        // attachmentWithData with options mime and as
+        $this->assertCount(1, $attachments = $message->getMessage()->getAttachments());
+        $this->assertSame([
+            'data of the attachment',
+            'name-of-file.txt',
+            'name-of-file.txt',
+            'base64',
+            'text/plain',
+            true,
+            'attachment',
+            0
+        ], $attachments[0]);
+
+        // attachmentData with options mime and encoding
         $eventsManager = new EventsManager();
         $eventsManager->attach('mailer:beforeAttachFile', function ($event, $manager, $params) {
-            /** @var \Swift_Attachment $attachment */
-            $attachment = $params[0];
-
-            $this->assertSame('new data of the attachment', $attachment->getBody());
-            $this->assertSame('new-name-of-file.txt', $attachment->getFilename());
-            $this->assertSame('mime-test', $attachment->getContentType());
+            $this->assertInstanceOf(Event::class, $event); // the event
+            $this->assertInstanceOf(Message::class, $manager); // the mailer manager
+            $this->assertNull($params);
         });
 
         $manager->setEventsManager($eventsManager);
-        $message->attachmentData('new data of the attachment', 'name-of-file.txt', [
-            'as'    => 'new-name-of-file.txt',
-            'mime'  => 'mime-test'
+        $message->attachmentData('new data of the attachment', 'name-of-file-2.txt', [
+            'encoding' => '8bit',
+            'mime'     => 'mime-test'
         ]);
+
+        $this->assertCount(2, $attachments = $message->getMessage()->getAttachments());
+        $this->assertSame([
+            'new data of the attachment',
+            'name-of-file-2.txt',
+            'name-of-file-2.txt',
+            '8bit',
+            'mime-test',
+            true,
+            'attachment',
+            0
+        ], $attachments[1]);
 
         $this->assertSame(11, $this->getCount(), 'the events for attachmentData have not been fired');
     }
 
     /**
-     * @test Test adding some embed files
+     * @test Test adding a not found embed file -> exception from PHPMailer
      */
-    public function testEmbed(): void
+    public function testEmbedFileNotFound(): void
     {
         $manager = new Manager(['driver' => 'smtp']);
         $message = new Message($manager);
 
-        $this->assertNotSame('', $message->embed('/path/to/file'));
-        $this->assertNotSame('', $message->embedData('file data', 'name-of-file.txt'));
+        $this->expectException(PHPMailerException::class);
+
+        $message->embed('', 'cid-file');
+    }
+
+    /**
+     * @test Test adding an embed file
+     */
+    public function testEmbedFileExistsNotRename(): void
+    {
+        $manager = new Manager(['driver' => 'smtp']);
+        $message = new Message($manager);
+
+        $message->embed(codecept_data_dir('fixtures/attachments/file.txt'), 'file-cid');
+
+        $this->assertCount(1, $attachments = $message->getMessage()->getAttachments());
+        $this->assertSame('file.txt', $attachments[0][1]);
+        $this->assertSame('file.txt', $attachments[0][2]);
+
+        $message->embed(codecept_data_dir('fixtures/attachments/file.txt'), 'file-cid', 'rename.txt');
+
+        $this->assertCount(2, $attachments = $message->getMessage()->getAttachments());
+        $this->assertSame('file.txt', $attachments[1][1]);
+        $this->assertSame('rename.txt', $attachments[1][2]);
     }
 
     /**
@@ -279,67 +365,7 @@ class MessageTest extends AbstractUnit
         });
         $manager->setEventsManager($eventsManager);
 
-        $this->assertSame(0, $message->send());
+        $this->assertSame(false, $message->send());
         $this->assertSame(2, $this->getCount());
-    }
-
-    /**
-     * @test Test ::send() with beforeSend returning true -> mail sent
-     */
-    public function testSendEventBeforeSendTrue(): void
-    {
-        $manager = new Manager([
-            'driver' => 'smtp',
-            'port'   => getenv('DATA_MAILHOG_SMTP_PORT'),
-            'host'   => getenv('DATA_MAILHOG_HOST_URI'),
-            'from'     => [
-                'email' => 'example_smtp@gmail.com',
-                'name'  => 'EXAMPLE SMTP'
-            ],
-        ]);
-
-        $message = new Message($manager);
-
-        $eventsManager = new EventsManager();
-        $eventsManager->attach('mailer:beforeSend', function ($event, $manager, $params) {
-            $this->assertNull($params);
-
-            return true;
-        });
-
-        $eventsManager->attach('mailer:afterSend', function ($event, $manager, $params) {
-            $this->assertIsArray($params);
-            $this->assertCount(2, $params);
-
-            $this->assertSame(1, $params[0]); // number of sent mails
-            $this->assertSame([], $params[1]); // failed recipients
-
-            return true;
-        });
-
-        $manager->setEventsManager($eventsManager);
-
-        $this->assertSame(1, $message->from('test@test.com')->to('test@test.com')->send());
-        $this->assertSame(6, $this->getCount(), 'mailer events beforeSend and afterSend have not been sent');
-
-        // Clean emails sent from MailHog
-        $ch = curl_init();
-
-        curl_setopt(
-            $ch,
-            CURLOPT_URL,
-            sprintf(
-                "%s%s:%s/api/v1/",
-                getenv('DATA_MAILHOG_HOST_PROTOCOL'),
-                getenv('DATA_MAILHOG_HOST_URI'),
-                getenv('DATA_MAILHOG_API_PORT')
-            ) . 'messages'
-        );
-
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
-        curl_exec($ch);
-        curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-        curl_close($ch);
     }
 }

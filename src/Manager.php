@@ -72,7 +72,7 @@ class Manager extends Injectable implements EventsAwareInterface
     public function __construct(array $config)
     {
         $this->config = $config;
-        $this->mailer = new PHPMailer();
+        $this->mailer = new PHPMailer(true); // throw exceptions from PHPMailer
 
         $driver = $this->getConfig('driver');
 
@@ -212,24 +212,6 @@ class Manager extends Injectable implements EventsAwareInterface
     }
 
     /**
-     * Normalize IDN domains.
-     *
-     * @param string $email
-     *
-     * @see \Phalcon\Mailer\Manager::punycode()
-     */
-    public function normalizeEmail(string $email): string
-    {
-        if (preg_match('#[^(\x20-\x7F)]+#', $email)) {
-            list($user, $domain) = explode('@', $email);
-
-            return $user . '@' . $this->punycode($domain);
-        } else {
-            return $email;
-        }
-    }
-
-    /**
      * Add view engines to the manager
      *
      * @param array<string, string> $engines
@@ -258,24 +240,6 @@ class Manager extends Injectable implements EventsAwareInterface
         }
 
         return $this->config;
-    }
-
-    /**
-     * Convert UTF-8 encoded domain name to ASCII
-     *
-     * @param string $str
-     *
-     * @return string
-     */
-    protected function punycode(string $str): string
-    {
-        if (function_exists('idn_to_ascii')) {
-            return idn_to_ascii($str);
-        } else {
-            // @codeCoverageIgnoreStart
-            return $str;
-            // @codeCoverageIgnoreEnd
-        }
     }
 
     /**

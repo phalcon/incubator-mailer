@@ -74,18 +74,6 @@ class ManagerTest extends AbstractUnit
     }
 
     /**
-     * @test Test with a driver correct but no DI was created -> exception from Phalcon\Di\Exception
-     */
-    public function testDriverCorrectWithNoDiCreated(): void
-    {
-        Di::reset();
-
-        $this->expectException(\Phalcon\Di\Exception::class);
-
-        new Manager(['driver' => 'smtp']);
-    }
-
-    /**
      * @test Test instantiating the manager with smtp driver -> try to access methods
      */
     public function testSmtpCorrectImplementation(): void
@@ -100,8 +88,7 @@ class ManagerTest extends AbstractUnit
         ]);
 
         $this->assertNull($manager->getEventsManager());
-        $this->assertInstanceOf('\Swift_Mailer', $manager->getSwift());
-        $this->assertInstanceOf(\Swift_SmtpTransport::class, $manager->getTransport());
+        $this->assertSame('smtp', $manager->getMailer()->Mailer);
     }
 
     /**
@@ -112,23 +99,7 @@ class ManagerTest extends AbstractUnit
         $manager = new Manager(['driver' => 'sendmail']);
 
         $this->assertNull($manager->getEventsManager());
-        $this->assertInstanceOf('\Swift_Mailer', $manager->getSwift());
-        $this->assertInstanceOf(\Swift_SendmailTransport::class, $manager->getTransport());
-    }
-
-    /**
-     * @test Test an email with a domain having unicode characters -> domain is punycoded
-     */
-    public function testNormalizeEmailPunycode(): void
-    {
-        $manager = new Manager([
-            'driver'        => 'smtp',
-            'host'          => 'testhost',
-            'username'      => 'johndoe@tést.com',
-            'password'      => 'testpassword'
-        ]);
-
-        $this->assertSame('johndoe@' . idn_to_ascii('tést') . '.com', $manager->getTransport()->getUsername());
+        $this->assertSame('sendmail', $manager->getMailer()->Mailer);
     }
 
     /**
@@ -174,7 +145,8 @@ class ManagerTest extends AbstractUnit
 
         $message = $manager->createMessage();
 
-        $this->assertSame(['test@mail.com' => null], $message->getFrom());
+        $this->assertSame('test@mail.com', $message->getFrom());
+        $this->assertSame('', $message->getFromName());
     }
 
     /**
@@ -192,7 +164,8 @@ class ManagerTest extends AbstractUnit
 
         $message = $manager->createMessage();
 
-        $this->assertSame(['test@mail.com' => 'John Doe'], $message->getFrom());
+        $this->assertSame('test@mail.com', $message->getFrom());
+        $this->assertSame('John Doe', $message->getFromName());
     }
 
     /**
