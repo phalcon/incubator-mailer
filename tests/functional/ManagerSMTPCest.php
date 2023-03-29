@@ -11,86 +11,33 @@
 
 declare(strict_types=1);
 
-namespace Phalcon\Incubator\Mailer\Tests\Functional\Manager;
+namespace Phalcon\Incubator\Mailer\Tests\Functional;
 
 use FunctionalTester;
-use Phalcon\Support\HelperFactory;
 use Phalcon\Incubator\Mailer\Manager;
-use Phalcon\Di\FactoryDefault as DI;
-use Phalcon\Mvc\View;
-use Phalcon\Mvc\View\Engine\Volt as VoltEngine;
-use Phalcon\Mvc\View\Engine\Php as PhpEngine;
-use Phalcon\Mvc\View\Simple;
 
-final class ManagerSMTPCest
+class ManagerSMTPCest extends AbstractFunctionalCest
 {
-    private $config, $baseUrl, $di;
-
-    public function __construct()
+    public function _before(): void
     {
-        $this->di = new DI();
+        parent::_before();
 
         $this->config = [
             'driver'   => 'smtp',
-            'host'     => getenv('DATA_MAILHOG_HOST_URI'),
-            'port'     => getenv('DATA_MAILHOG_SMTP_PORT'),
+            'host'     => $_ENV['DATA_MAILHOG_HOST_URI'],
+            'port'     => $_ENV['DATA_MAILHOG_SMTP_PORT'],
             'username' => 'example@gmail.com',
             'password' => 'your_password',
             'from'     => [
                 'email' => 'example_smtp@gmail.com',
-                'name'  => 'EXAMPLE SMTP',
-            ],
+                'name'  => 'EXAMPLE SMTP'
+            ]
         ];
-
-        $helper = new HelperFactory();
-
-        $this->di->set(
-            'simple',
-            function () use ($helper) {
-                $view = new Simple();
-
-                $view->setViewsDir($helper->dirSeparator(
-                    codecept_data_dir() . 'fixtures/views'
-                ));
-
-                return $view;
-            },
-            true
-        );
-
-        $this->di->setShared(
-            'view',
-            function () use ($helper) {
-                $view = new View();
-
-                $view->setDI($this);
-                $view->setViewsDir($helper->dirSeparator(
-                    codecept_data_dir() . 'fixtures/views'
-                ));
-
-                $view->registerEngines([
-                    '.volt'  => function ($view) {
-
-                        $volt = new VoltEngine($view, $this);
-
-                        $volt->setOptions([
-                            'path'      => codecept_output_dir(),
-                            'separator' => '_'
-                        ]);
-
-                        return $volt;
-                    },
-                    '.phtml' => PhpEngine::class
-
-                ]);
-
-                return $view;
-            }
-        );
-
-        $this->baseUrl = sprintf("%s%s:%s/api/v1/", getenv('DATA_MAILHOG_HOST_PROTOCOL'), getenv('DATA_MAILHOG_HOST_URI'), getenv('DATA_MAILHOG_API_PORT'));
     }
 
+    /**
+     * @test Test sending a mail by creating a message from the manager
+     */
     public function mailerManagerCreateMessage(FunctionalTester $I)
     {
         $to      = 'example_to@gmail.com';
@@ -104,40 +51,34 @@ final class ManagerSMTPCest
             ->subject($subject)
             ->content($body);
 
-        $message->send();
+        $I->assertTrue($message->send());
 
-        $opts = [
-            'http' => [
-                'method' => 'GET',
-                'header' => 'Accept-language: en\r\n'
-            ]
-        ];
+        // Get mails sent with the messages from MailHog
+        $mails = $this->getMailsFromMailHog();
 
-        $context = stream_context_create($opts);
+        // Check that there is one mail sent
+        $I->assertCount(1, $mails);
+        $I->assertInstanceOf('\stdClass', $mails[0]);
 
-        // Get all mail send in the MailHog SMTP
-        $dataMail = file_get_contents($this->baseUrl . 'messages', false, $context);
-        $dataMail = \json_decode($dataMail);
+        $mail = $mails[0];
 
-        //Check that there are one mail send
-        $I->assertCount(1, $dataMail);
+        $mailTo = $mail->To;
+        $I->assertCount(1, $mailTo);
+        $I->assertInstanceOf('\stdClass', $mailTo[0]);
+        $I->assertSame($to, $mailTo[0]->Mailbox . '@' . $mailTo[0]->Domain);
 
-        $mail = $dataMail[0];
+        $mailFrom = $mail->From;
+        $I->assertInstanceOf('\stdClass', $mailFrom);
+        $I->assertSame($this->config['from']['email'], $mailFrom->Mailbox . '@' . $mailFrom->Domain);
 
-        $mailFromData = $mail->From;
-        $mailToData   = end($mail->To);
-
-        $mailFrom = $mailFromData->Mailbox . '@' . $mailFromData->Domain;
-        $mailTo   = $mailToData->Mailbox . '@' . $mailToData->Domain;
-
-        $I->assertEquals($this->config['from']['email'], $mailFrom);
-        $I->assertEquals($to, $mailTo);
-
-        $I->assertEquals($body, $mail->Content->Body);
+        $I->assertSame($body . "\r\n", $mail->Content->Body);
         $I->assertStringContainsString('Subject: ' . $subject, $mail->Raw->Data);
     }
 
-    public function mailerManagerCreateMessageFromView(FunctionalTester $I)
+    /**
+     * @test Test sending a mail by creating a message from the manager with view params
+     */
+    public function mailerManagerCreateMessageFromView(FunctionalTester $I): void
     {
         $mailer = new Manager($this->config);
 
@@ -147,7 +88,7 @@ final class ManagerSMTPCest
         // Set variables to views (OPTIONAL)
         $params = [
             'var1' => 'VAR VALUE 1',
-            'var2' => 'VAR VALUE 2',
+            'var2' => 'VAR VALUE 2'
         ];
 
         $to      = 'example_to@gmail.com';
@@ -156,48 +97,30 @@ final class ManagerSMTPCest
         $message = $mailer->createMessageFromView($viewPath, $params)
             ->to($to)
             ->subject($subject);
-        $message->send();
 
-        $opts = [
-            'http' => [
-                'method' => 'GET',
-                'header' => 'Accept-language: en\r\n'
-            ]
-        ];
+        $I->assertTrue($message->send());
 
-        $context = stream_context_create($opts);
+        // Get mails sent with the messages from MailHog
+        $mails = $this->getMailsFromMailHog();
 
-        // Get all mail send in the MailHog SMTP
-        $dataMail = file_get_contents($this->baseUrl . 'messages', false, $context);
-        $dataMail = \json_decode($dataMail);
+        // Check that there is one mail sent
+        $I->assertCount(1, $mails);
+        $I->assertInstanceOf('\stdClass', $mails[0]);
 
-        // Check that there are one mail send
-        $I->assertCount(2, $dataMail);
+        $mail = $mails[0];
 
-        $mail = $dataMail[0];
+        $mailTo = $mail->To;
+        $I->assertCount(1, $mailTo);
+        $I->assertInstanceOf('\stdClass', $mailTo[0]);
+        $I->assertSame($to, $mailTo[0]->Mailbox . '@' . $mailTo[0]->Domain);
 
-        $mailFromData = $mail->From;
-        $mailToData   = end($mail->To);
-
-        $mailFrom = $mailFromData->Mailbox . '@' . $mailFromData->Domain;
-        $mailTo   = $mailToData->Mailbox . '@' . $mailToData->Domain;
-
-        $I->assertEquals($this->config['from']['email'], $mailFrom);
-        $I->assertEquals($to, $mailTo);
+        $mailFrom = $mail->From;
+        $I->assertInstanceOf('\stdClass', $mailFrom);
+        $I->assertSame($this->config['from']['email'], $mailFrom->Mailbox . '@' . $mailFrom->Domain);
 
         $body = $this->di->get('simple')->render($viewPath, $params);
 
-        $I->assertEquals($body, $mail->Content->Body);
+        $I->assertSame($body . "\r\n", $mail->Content->Body);
         $I->assertStringContainsString('Subject: ' . $subject, $mail->Raw->Data);
-
-        // Clean emails sent from MailHog
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->baseUrl . 'messages');
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
-        $result     = curl_exec($ch);
-        $httpCode   = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-        curl_close($ch);
-        $I->assertEquals(200, $httpCode);
     }
 }
