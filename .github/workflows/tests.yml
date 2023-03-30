@@ -10,6 +10,12 @@ jobs:
         ports:
           - 1025
           - 8025
+      mailhog-fail-recipients:
+        image: mailhog/mailhog:v1.0.0
+        ports:
+          - 1026
+          - 8026
+        command: -invite-jim -jim-reject-recipient=1 -jim-reject-sender=0 -jim-reject-auth=0 -jim-disconnect=0 -jim-accept=1
     name: PHP ${{ matrix.php-versions }}
     runs-on: ubuntu-latest
     env:
@@ -71,14 +77,9 @@ jobs:
           sudo echo 'sendmail_path = "$HOME/bin/mhsendmail --smtp-addr=\"localhost:${{ job.services.mailhog.ports['1025'] }}\""' >> $(php -i | grep /.+/php.ini -oE)
 
       - name: Setup Tests
-        run: |
-          cp tests/_ci/.env.default .env
-          vendor/bin/codecept build
+        run: vendor/bin/codecept build
 
       - name: Run test suites
-        env:
-          DATA_MAILHOG_SMTP_PORT: ${{ job.services.mailhog.ports['1025'] }}
-          DATA_MAILHOG_API_PORT: ${{ job.services.mailhog.ports['8025'] }}
         if: success()
         run: vendor/bin/codecept run --coverage-xml=coverage-${{ matrix.php-versions }}.xml
 

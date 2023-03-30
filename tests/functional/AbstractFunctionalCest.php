@@ -31,23 +31,15 @@ abstract class AbstractFunctionalCest
     protected Di $di;
 
     /**
-     * URL of MailHog
+     * Api URL of MailHog to retrieve messages
      */
-    protected string $baseUrl;
+    protected string $baseUrl = 'http://mailhog:8025/api/v1/';
 
     /**
      * Method called before each test, set the URL of MailHog and services for the Di
      */
     public function _before(): void
     {
-        // local URL of MailHog
-        $this->baseUrl = sprintf(
-            "%s%s:%s/api/v1/",
-            $_ENV['DATA_MAILHOG_HOST_PROTOCOL'],
-            $_ENV['DATA_MAILHOG_HOST_URI'],
-            $_ENV['DATA_MAILHOG_API_PORT']
-        );
-
         $dirSeparator = new \Phalcon\Support\Helper\Str\DirSeparator();
 
         $this->di = new \Phalcon\Di\FactoryDefault();

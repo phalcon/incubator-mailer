@@ -352,7 +352,7 @@ class MessageTest extends AbstractUnit
     /**
      * @test Test ::send() with beforeSend returning false -> mail not sent
      */
-    public function testSendEventBeforeSendFalse(): void
+    public function testSendBeforeSendEventFalse(): void
     {
         $manager = new Manager(['driver' => 'smtp']);
         $message = new Message($manager);
@@ -365,7 +365,7 @@ class MessageTest extends AbstractUnit
         });
         $manager->setEventsManager($eventsManager);
 
-        $this->assertSame(false, $message->send());
+        $this->assertSame(0, $message->send());
         $this->assertSame(2, $this->getCount());
     }
 }

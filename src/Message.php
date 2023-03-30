@@ -21,6 +21,7 @@ namespace Phalcon\Incubator\Mailer;
 
 use Phalcon\Incubator\Mailer\Manager;
 use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception as PHPMailerException;
 
 /**
  * Class Message
@@ -557,7 +558,8 @@ class Message
     /**
      * Embed a file in the message with the cid that you choose
      *
-     * @param string $filename If you want to override the file name
+     * @param string $file File path
+     * @param string $cid Content ID of the attachment
      *
      * @see PHPMailer::addEmbeddedImage()
      */
@@ -570,6 +572,7 @@ class Message
      * Embed in-memory in the message with the cid that you choose
      *
      * @param string $filename If you want to override the file name
+     * @param string $cid Content ID of the attachment
      *
      * @see PHPMailer::addStringEmbeddedImage()
      */
@@ -586,18 +589,18 @@ class Message
      *
      * Recipient/sender data will be retrieved from the Message object.
      *
-     * The return value is the number of recipients who were accepted for
-     * delivery.
+     * The return value is the number of recipients who were accepted for delivery.
      *
      * Events:
+     *
      * - mailer:beforeSend
-     * - mailer:afterSend
+     * - mailer:afterSend, parameters: bool $count (number of sent mails), array<int, string> $failedRecipients
      *
      * @see PHPMailer::send()
      *
-     * @todo Call the callback provided by PHPMailer to get all recipients
+     * @throws PHPMailerException If a critical error occurred from PHPMailer
      */
-    public function send(): bool
+    public function send(): int
     {
         $eventManager = $this->getManager()->getEventsManager();
 
@@ -606,13 +609,37 @@ class Message
             return false;
         }
 
-        $hasSent = $this->message->send();
+        $this->failedRecipients = [];
+        $count = 0;
 
-        if ($eventManager) {
-            $eventManager->fire('mailer:afterSend', $this);
+        // We tell PHPMailer to give us the failed recipients and number of sent mails
+        $this->message->action_function = function (bool $result, array $to) use (&$count) {
+            foreach ($to as $recipient) {
+                if (!$result) {
+                    $this->failedRecipients[] = $recipient[0];
+                } else {
+                    $count++;
+                }
+            }
+        };
+
+        // We don't throw an exception if PHPMailer doesn't consider it 'critical' (e.g. failed recipients)
+        try {
+            $this->message->send();
+        } catch (PHPMailerException $e) {
         }
 
-        return $hasSent;
+        // Trigger afterSend with number of sent mails and failed recipients
+        if ($eventManager) {
+            $eventManager->fire('mailer:afterSend', $this, [$count, $this->failedRecipients]);
+        }
+
+        // We throw an exception after triggering the event
+        if (isset($e) && $e->getCode() !== PHPMailer::STOP_CONTINUE) {
+            throw $e;
+        }
+
+        return $count;
     }
 
     /**

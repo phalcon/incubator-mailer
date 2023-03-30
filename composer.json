@@ -56,7 +56,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Phalcon\\Incubator\\Mailer\\Tests\\Unit\\": "tests/unit/"
+            "Phalcon\\Incubator\\Mailer\\Tests\\Unit\\": "tests/unit/",
+            "Phalcon\\Incubator\\Mailer\\Tests\\Functional\\": "tests/functional/"
         }
     },
     "minimum-stability": "dev",
