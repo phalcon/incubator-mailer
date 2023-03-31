@@ -25,7 +25,11 @@ class ManagerSendmailCest extends AbstractFunctionalCest
 
         $this->config = [
             'driver'    => 'sendmail',
-            'sendmail'  => 'sendmail --smtp-addr mailpit:1025',
+            'sendmail'  => sprintf(
+                'sendmail --smtp-addr %s:%s',
+                $_ENV['DATA_MAILPIT_HOST_URI'],
+                $_ENV['DATA_MAILPIT_SMTP_PORT']
+            ),
             'from'      => [
                 'email' => 'example_sendmail@gmail.com',
                 'name'  => 'EXAMPLE SENDMAIL'
@@ -50,7 +54,7 @@ class ManagerSendmailCest extends AbstractFunctionalCest
             ->subject($subject)
             ->content($body);
 
-        $I->assertSame(1, $message->send());
+        $I->assertSame(1, $message->send(), $message->getLastError());
         $I->assertSame([], $message->getFailedRecipients());
 
         // Get sent mails with the messages API
@@ -96,7 +100,7 @@ class ManagerSendmailCest extends AbstractFunctionalCest
             ->cc($cc)
             ->subject($subject);
 
-        $I->assertSame(1, $message->send());
+        $I->assertSame(1, $message->send(), $message->getLastError());
 
         // Get sent mails with the messages API
         $mails = $this->getMessages();
@@ -161,7 +165,7 @@ class ManagerSendmailCest extends AbstractFunctionalCest
         $mailer->setEventsManager($eventsManager);
 
         // Event has been triggered and asserted
-        $I->assertSame(3, $message->send());
+        $I->assertSame(3, $message->send(), $message->getLastError());
         $I->assertSame(1, $eventsCount);
     }
 

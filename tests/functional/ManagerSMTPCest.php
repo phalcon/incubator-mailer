@@ -25,8 +25,8 @@ class ManagerSMTPCest extends AbstractFunctionalCest
 
         $this->config = [
             'driver'   => 'smtp',
-            'host'     => 'mailpit',
-            'port'     => '1025',
+            'host'     => $_ENV['DATA_MAILPIT_HOST_URI'],
+            'port'     => $_ENV['DATA_MAILPIT_SMTP_PORT'],
             'username' => 'example@gmail.com',
             'password' => 'your_password',
             'from'     => [

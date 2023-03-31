@@ -34,13 +34,20 @@ abstract class AbstractFunctionalCest
     /**
      * Base Api URL of Mailpit
      */
-    protected string $baseUrl = 'http://mailpit:8025/api/v1/';
+    protected string $baseUrl;
 
     /**
      * Method called before each test, set the URL of MailHog and services for the Di
      */
     public function _before(): void
     {
+        $this->baseUrl = sprintf(
+            '%s%s:%s/api/v1/',
+            $_ENV['DATA_MAILPIT_HOST_PROTOCOL'],
+            $_ENV['DATA_MAILPIT_HOST_URI'],
+            $_ENV['DATA_MAILPIT_API_PORT']
+        );
+
         $dirSeparator = new \Phalcon\Support\Helper\Str\DirSeparator();
 
         $this->di = new \Phalcon\Di\FactoryDefault();

@@ -64,9 +64,13 @@ jobs:
           ln -s /usr/local/bin/mailpit /usr/sbin/sendmail
 
       - name: Setup Tests
-        run: vendor/bin/codecept build
+        run: |
+          cp tests/_ci/.env.default .env
+          vendor/bin/codecept build
 
       - name: Run test suites
+        env:
+          DATA_MAILPIT_HOST_URI=localhost
         if: success()
         run: vendor/bin/codecept run --coverage-xml=coverage-${{ matrix.php-versions }}.xml
 
