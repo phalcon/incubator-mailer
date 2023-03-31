@@ -243,13 +243,24 @@ class MessageTest extends AbstractUnit
 
             $this->assertInstanceOf(Event::class, func_get_arg(0)); // the event
             $this->assertInstanceOf(Message::class, func_get_arg(1)); // the mailer manager
-            $this->assertNull(func_get_arg(2));
+            $this->assertIsArray($params = func_get_arg(2));
+
+            $this->assertSame([
+                codecept_data_dir('fixtures/attachments/file.txt'),
+                'file.txt',
+                'file.txt',
+                'base64',
+                'text/plain',
+                false,
+                'attachment',
+                'file.txt'
+            ], $params);
         });
 
         $manager->setEventsManager($eventsManager);
         $message->attachment(codecept_data_dir('fixtures/attachments/file.txt'));
 
-        $this->assertSame(8, $this->getCount(), 'the events for attachments have not been fired');
+        $this->assertSame(9, $this->getCount(), 'the events for attachments have not been fired');
         $this->assertCount(1, $message->getMessage()->getAttachments());
     }
 
@@ -261,6 +272,17 @@ class MessageTest extends AbstractUnit
         $manager = new Manager(['driver' => 'smtp']);
         $message = new Message($manager);
 
+        $expectedAttachment = [
+            'data of the attachment',
+            'name-of-file.txt',
+            'name-of-file.txt',
+            'base64',
+            'text/plain',
+            true,
+            'attachment',
+            0
+        ];
+
         // attachmentData with no option
         $eventsManager = new EventsManager();
         $eventsManager->attach('mailer:beforeAttachFile', function () {
@@ -271,20 +293,32 @@ class MessageTest extends AbstractUnit
             $this->assertNull(func_get_arg(2));
         });
 
+        $eventsManager->attach('mailer:afterAttachFile', function () use ($expectedAttachment) {
+            $this->assertSame(3, func_num_args());
+
+            $this->assertInstanceOf(Event::class, func_get_arg(0)); // the event
+            $this->assertInstanceOf(Message::class, func_get_arg(1)); // the mailer manager
+
+            $this->assertIsArray($params = func_get_arg(2));
+            $this->assertSame($expectedAttachment, $params);
+        });
+
         $manager->setEventsManager($eventsManager);
         $message->attachmentData('data of the attachment', 'name-of-file.txt');
 
         $this->assertCount(1, $attachments = $message->getMessage()->getAttachments());
-        $this->assertSame([
-            'data of the attachment',
-            'name-of-file.txt',
-            'name-of-file.txt',
-            'base64',
-            'text/plain',
+        $this->assertSame($expectedAttachment, $attachments[0]);
+
+        $expectedAttachment = [
+            'new data of the attachment',
+            'name-of-file-2.txt',
+            'name-of-file-2.txt',
+            '8bit',
+            'mime-test',
             true,
             'attachment',
             0
-        ], $attachments[0]);
+        ];
 
         // attachmentData with options mime and encoding
         $eventsManager = new EventsManager();
@@ -294,6 +328,16 @@ class MessageTest extends AbstractUnit
             $this->assertNull($params);
         });
 
+        $eventsManager->attach('mailer:afterAttachFile', function () use ($expectedAttachment) {
+            $this->assertSame(3, func_num_args());
+
+            $this->assertInstanceOf(Event::class, func_get_arg(0)); // the event
+            $this->assertInstanceOf(Message::class, func_get_arg(1)); // the mailer manager
+            $this->assertIsArray($params = func_get_arg(2));
+
+            $this->assertSame($expectedAttachment, $params);
+        });
+
         $manager->setEventsManager($eventsManager);
         $message->attachmentData('new data of the attachment', 'name-of-file-2.txt', [
             'encoding' => '8bit',
@@ -301,18 +345,9 @@ class MessageTest extends AbstractUnit
         ]);
 
         $this->assertCount(2, $attachments = $message->getMessage()->getAttachments());
-        $this->assertSame([
-            'new data of the attachment',
-            'name-of-file-2.txt',
-            'name-of-file-2.txt',
-            '8bit',
-            'mime-test',
-            true,
-            'attachment',
-            0
-        ], $attachments[1]);
+        $this->assertSame($expectedAttachment, $attachments[1]);
 
-        $this->assertSame(11, $this->getCount(), 'the events for attachmentData have not been fired');
+        $this->assertSame(21, $this->getCount(), 'the events for attachmentData have not been fired');
     }
 
     /**

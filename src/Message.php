@@ -495,11 +495,14 @@ class Message
      * Attach a file to the message.
      *
      * Events:
+     *
      * - mailer:beforeAttachFile
      * - mailer:afterAttachFile
      *
      * @param string $file File path
      * @param array{encoding?: string, mime?: string, as?: string} $options
+     *
+     * @throws PHPMailerException If the attachment has not been added from PHPMailer
      *
      * @see self::prepareAttachment()
      */
@@ -512,12 +515,15 @@ class Message
      * Attach in-memory data as an attachment.
      *
      * Events:
+     *
      * - mailer:beforeAttachFile
      * - mailer:afterAttachFile
      *
      * @param string $data Source of the attachment
      * @param string $name Name of the attachment
      * @param array{encoding?: string, mime?: string} $options
+     *
+     * @throws PHPMailerException If the attachment has not been added from PHPMailer
      *
      * @see self::prepareAttachment()
      */
@@ -528,6 +534,8 @@ class Message
 
     /**
      * Prepares an attachment by triggering beforeAttachFile and afterAttachFile events and adding it to the message
+     *
+     * @throws PHPMailerException If the attachment has not been added from PHPMailer
      */
     protected function prepareAttachment(string $source, string $name = '', array $options = []): self
     {
@@ -548,8 +556,11 @@ class Message
             $this->message->addStringAttachment($source, $name, $encoding, $type);
         }
 
+        $attachments = $this->message->getAttachments();
+
+        // Trigger afterAttachFile event with the informations of the attachment from PHPMailer
         if ($eventsManager) {
-            $eventsManager->fire('mailer:afterAttachFile', $this);
+            $eventsManager->fire('mailer:afterAttachFile', $this, end($attachments));
         }
 
         return $this;
