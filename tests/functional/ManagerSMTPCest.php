@@ -16,7 +16,6 @@ namespace Phalcon\Incubator\Mailer\Tests\Functional;
 use FunctionalTester;
 use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Incubator\Mailer\Manager;
-use PHPMailer\PHPMailer\Exception;
 
 class ManagerSMTPCest extends AbstractFunctionalCest
 {
@@ -40,7 +39,7 @@ class ManagerSMTPCest extends AbstractFunctionalCest
     /**
      * @test Test sending a mail by creating a message from the manager
      */
-    public function mailerManagerCreateMessageOu(FunctionalTester $I)
+    public function mailerManagerCreateMessage(FunctionalTester $I)
     {
         $to      = 'example_to@gmail.com';
         $subject = 'Hello SMTP';
@@ -199,16 +198,17 @@ class ManagerSMTPCest extends AbstractFunctionalCest
      */
     public function mailerManagerCreateMessageFailedRecipients(FunctionalTester $I): void
     {
-        $I->markTestSkipped('Waiting to simulate failed recipients error from Mailpit');
-
         $eventsCount = 0;
 
-        $mailer  = new Manager(array_merge($this->config, ['host' => 'mailhog-fail-recipients']));
+        $mailer  = new Manager($this->config);
         $message = $mailer->createMessage()
             ->to('example_to@gmail.com')
             ->to('example_to2@gmail.com')
             ->subject('Test subject')
             ->content('content');
+
+        // Simulate the error from PHPMailer
+        $message->getMessage()->Mailer = 'mail';
 
         $eventsManager = new EventsManager();
 
@@ -230,10 +230,11 @@ class ManagerSMTPCest extends AbstractFunctionalCest
         $I->assertSame(0, $message->send());
         $I->assertSame(1, $eventsCount);
         $I->assertSame(['example_to@gmail.com', 'example_to2@gmail.com'], $message->getFailedRecipients());
+        $I->assertNotSame('', $message->getLastError());
     }
 
     /**
-     * @test Test sending mail with SMTP errored to connect -> exception from PHPMailer
+     * @test Test sending mail with SMTP errored to connect -> 0 sent mail and a message from PHPMailer
      */
     public function mailerManagerCreateMessageSmtpAuthError(FunctionalTester $I): void
     {
@@ -244,7 +245,7 @@ class ManagerSMTPCest extends AbstractFunctionalCest
             ->subject('Test subject')
             ->content('content');
 
-        // Exception thrown by PHPMailer
-        $I->expectThrowable(Exception::class, fn () => $message->send());
+        $I->assertSame(0, $message->send());
+        $I->assertNotSame('', $message->getLastError());
     }
 }

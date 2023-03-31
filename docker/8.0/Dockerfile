@@ -26,6 +26,10 @@ RUN docker-php-ext-enable \
     phalcon \
     xdebug
 
+# Installing Mailpit
+RUN sudo bash < <(curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh) \
+    && ln -s /usr/local/bin/mailpit /usr/sbin/sendmail
+
 # Cleanup
 RUN apt autoremove -y \
     && apt autoclean -y \

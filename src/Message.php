@@ -608,8 +608,7 @@ class Message
      * - mailer:afterSend, parameters: bool $count (number of sent mails), array<int, string> $failedRecipients
      *
      * @see PHPMailer::send()
-     *
-     * @throws PHPMailerException If a critical error occurred from PHPMailer
+     * @see self::getLastError() if the return value equals to 0
      */
     public function send(): int
     {
@@ -634,7 +633,7 @@ class Message
             }
         };
 
-        // We don't throw an exception if PHPMailer doesn't consider it 'critical' (e.g. failed recipients)
+        // We don't throw an exception from PHPMailer but $count will equal to 0 (e.g. failed recipients for SMTP)
         try {
             $this->message->send();
         } catch (PHPMailerException $e) {
@@ -643,11 +642,6 @@ class Message
         // Trigger afterSend with number of sent mails and failed recipients
         if ($eventManager) {
             $eventManager->fire('mailer:afterSend', $this, [$count, $this->failedRecipients]);
-        }
-
-        // We throw an exception after triggering the event
-        if (isset($e) && $e->getCode() !== PHPMailer::STOP_CONTINUE) {
-            throw $e;
         }
 
         return $count;
@@ -716,5 +710,13 @@ class Message
     public function getManager(): Manager
     {
         return $this->manager;
+    }
+
+    /**
+     * Return the most recent error message from PHPMailer
+     */
+    public function getLastError(): string
+    {
+        return $this->message->ErrorInfo;
     }
 }
