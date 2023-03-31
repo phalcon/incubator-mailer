@@ -1,4 +1,6 @@
 parameters:
+        treatPhpDocTypesAsCertain: false
+
         bootstrapFiles: 
         - %rootDir%/../../../vendor/autoload.php
 

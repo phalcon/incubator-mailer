@@ -55,7 +55,7 @@ class Message
     protected array $failedRecipients = [];
 
     /**
-     * Create a new Message using $mailer for sending from SwiftMailer
+     * Create a new Message using $mailer for sending from PHPMailer
      */
     public function __construct(Manager $manager)
     {
@@ -214,7 +214,7 @@ class Message
      * associated with the address.
      *
      * @param string|array<int|string, string> $email
-     * @param string|null $name optional
+     * @param string $name optional
      *
      * @see PHPMailer::addBCC()
      */
@@ -616,14 +616,20 @@ class Message
 
         // Trigger beforeSend event and doesn't send if it returned false
         if ($eventManager && $eventManager->fire('mailer:beforeSend', $this) === false) {
-            return false;
+            return 0;
         }
 
         $this->failedRecipients = [];
         $count = 0;
 
-        // We tell PHPMailer to give us the failed recipients and number of sent mails
-        $this->message->action_function = function (bool $result, array $to) use (&$count) {
+        /**
+         * We tell PHPMailer to give us the failed recipients and number of sent mails
+         *
+         * PHPMailer asks for a string, but any callable can be set
+         * @psalm-suppress InvalidPropertyAssignmentValue
+         * @phpstan-ignore-next-line
+         */
+        $this->message->action_function = function (bool $result, array $to) use (&$count): void {
             foreach ($to as $recipient) {
                 if (!$result) {
                     $this->failedRecipients[] = $recipient[0];
@@ -657,6 +663,8 @@ class Message
      */
     protected function handleEmails($email): array
     {
+        $emails = [];
+
         if (is_string($email)) {
             return [$email => ''];
         }
@@ -670,7 +678,7 @@ class Message
                 }
             }
 
-            return $emails ?? [];
+            return $emails;
         }
 
         return [];
@@ -679,7 +687,7 @@ class Message
     /**
      * Flattens an array from PHPMailer to return an associative array
      *
-     * @param array<int, array{0: string, 1: string}> $emails
+     * @param array<int, array{0: string, 1: string}> $mails
      *
      * @return array<string, string>
      */
@@ -689,6 +697,7 @@ class Message
             return [];
         }
 
+        $flattenedMails = [];
         foreach ($mails as $aMail) {
             $flattenedMails[$aMail[0]] = $aMail[1];
         }
