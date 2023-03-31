@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Phalcon\Incubator\Mailer\Tests\Functional;
 
+use LogicException;
 use Phalcon\Di\Di;
 use Phalcon\Mvc\View;
 
@@ -31,9 +32,9 @@ abstract class AbstractFunctionalCest
     protected Di $di;
 
     /**
-     * Api URL of MailHog to retrieve messages
+     * Base Api URL of Mailpit
      */
-    protected string $baseUrl = 'http://mailhog:8025/api/v1/';
+    protected string $baseUrl = 'http://mailpit:8025/api/v1/';
 
     /**
      * Method called before each test, set the URL of MailHog and services for the Di
@@ -90,8 +91,8 @@ abstract class AbstractFunctionalCest
      */
     protected function cleanMailhog(): void
     {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->baseUrl . 'messages');
+        $ch = curl_init($this->baseUrl . 'messages');
+
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
         curl_exec($ch);
 
@@ -99,18 +100,38 @@ abstract class AbstractFunctionalCest
     }
 
     /**
-     * Get mails sent with the messages from MailHog
+     * Get mails sent from Mailpit
      *
-     * @return array<int, \stdClass>
+     * @see https://github.com/axllent/mailpit/blob/develop/docs/apiv1/Messages.md
+     *
+     * @throws LogicException If the API occured an error and the json hasn't been decoded
      */
-    protected function getMailsFromMailHog(): array
+    protected function getMessages(): \stdClass
     {
-        $mails = json_decode(file_get_contents($this->baseUrl . 'messages', false) ?: '');
+        $mails = json_decode(file_get_contents($this->baseUrl . 'messages') ?: '');
 
-        if (!is_array($mails)) {
-            throw new \LogicException('Failed to json_decode() messages from MailHog');
+        if (!is_object($mails)) {
+            throw new LogicException('Failed to json_decode() messages from Mailpit');
         }
 
         return $mails;
+    }
+
+    /**
+     * Get one sent mail from its ID
+     *
+     * @see https://github.com/axllent/mailpit/blob/develop/docs/apiv1/Message.md
+     *
+     * @throws LogicException If the id was not found
+     */
+    protected function getMessage(string $id): \stdClass
+    {
+        $message = json_decode(file_get_contents("{$this->baseUrl}message/$id") ?: '');
+
+        if (!is_object($message)) {
+            throw new LogicException('Failed to json_decode() a single message from Mailpit');
+        }
+
+        return $message;
     }
 }
