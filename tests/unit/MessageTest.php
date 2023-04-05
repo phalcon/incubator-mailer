@@ -56,8 +56,14 @@ class MessageTest extends AbstractUnit
         $manager = new Manager(['driver' => 'smtp']);
         $message = new Message($manager);
 
+        $this->assertInstanceOf(Message::class, $message->setFormat('flowed'));
+
         $message->setReadReceiptTo('test-receipt@test.com');
         $this->assertSame('test-receipt@test.com', $message->getReadReceiptTo());
+
+        // try to add neither a string or array
+        $message->bcc(1);
+        $this->assertSame([], $message->getBcc());
 
         $message->bcc('johndoe@test.com', 'John Doe');
         $this->assertSame(['johndoe@test.com' => 'John Doe'], $message->getBcc());
@@ -133,9 +139,26 @@ class MessageTest extends AbstractUnit
         $this->assertSame(Message::CONTENT_TYPE_PLAIN, $message->getContentType());
         $this->assertSame('ascii', $message->getCharset());
 
-        $message->contentAlternative('test content alternative');
+        $message = new Message($manager);
+        $message->content('this is the content 2');
         $message->contentType(Message::CONTENT_TYPE_HTML);
-        $message->charset('utf-8');
+        $message->charset('ascii');
+
+        $this->assertSame('this is the content 2', $message->getContent());
+        $this->assertSame(Message::CONTENT_TYPE_HTML, $message->getContentType());
+        $this->assertSame('ascii', $message->getCharset());
+    }
+
+    /**
+     * @test Test adding an alternative content
+     */
+    public function testContentAlternative(): void
+    {
+        $manager = new Manager(['driver' => 'smtp']);
+        $message = new Message($manager);
+
+        $message->contentAlternative('test content alternative', Message::CONTENT_TYPE_HTML, 'utf-8');
+        $this->assertSame('test content alternative', $message->getMessage()->AltBody);
         $this->assertSame('utf-8', $message->getCharset());
         $this->assertSame('text/html', $message->getContentType());
     }
@@ -382,6 +405,21 @@ class MessageTest extends AbstractUnit
         $this->assertCount(2, $attachments = $message->getMessage()->getAttachments());
         $this->assertSame('file.txt', $attachments[1][1]);
         $this->assertSame('rename.txt', $attachments[1][2]);
+    }
+
+    /**
+     * @test Test adding an embed data
+     */
+    public function testEmbedFileData(): void
+    {
+        $manager = new Manager(['driver' => 'smtp']);
+        $message = new Message($manager);
+
+        $message->embedData('data of the embed', 'file-cid', 'file.txt');
+
+        $this->assertCount(1, $attachments = $message->getMessage()->getAttachments());
+        $this->assertSame('data of the embed', $attachments[0][0]);
+        $this->assertSame('file.txt', $attachments[0][1]);
     }
 
     /**

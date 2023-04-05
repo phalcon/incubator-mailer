@@ -4,23 +4,22 @@ on: [push, pull_request]
 
 jobs:
   run-tests:
-    services:
-      mailhog:
-        image: mailhog/mailhog:v1.0.0
-        ports:
-          - 1025
-          - 8025
-      mailhog-fail-recipients:
-        image: mailhog/mailhog:v1.0.0
-        ports:
-          - 1026
-          - 8026
-        command: -invite-jim -jim-reject-recipient=1 -jim-reject-sender=0 -jim-reject-auth=0 -jim-disconnect=0 -jim-accept=1
     name: PHP ${{ matrix.php-versions }}
+
     runs-on: ubuntu-latest
+    container: ubuntu
+
+    services:
+      mailpit:
+        image: axllent/mailpit
+        ports:
+          - 1025:1025
+          - 8025:8025
+
     env:
-      extensions: mbstring, intl, json, phalcon-5.2.1, xdebug
+      extensions: mbstring, intl, json, xdebug, phalcon-5.2.1
       key: cache-v0.0.2
+
     strategy:
       fail-fast: false
       matrix:
@@ -64,20 +63,15 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-suggest
 
-      - name: Install Go for check sendmail
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Install mhsendmail to test sendmail mode
-        run: |
-          mkdir -p "$HOME/bin"
-          wget -O "$HOME/bin/mhsendmail" https://github.com/mailhog/mhsendmail/releases/download/v0.2.0/mhsendmail_linux_amd64
-          chmod +x "$HOME/bin/mhsendmail"
-          sudo echo 'sendmail_path = "$HOME/bin/mhsendmail --smtp-addr=\"localhost:${{ job.services.mailhog.ports['1025'] }}\""' >> $(php -i | grep /.+/php.ini -oE)
-
       - name: Setup Tests
-        run: vendor/bin/codecept build
+        run: |
+          cp tests/_ci/.env.default .env
+          vendor/bin/codecept build
+
+      - name: Install Mailpit and create a symbolic link to sendmail command
+        run: |
+          sudo curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh | sudo bash
+          sudo ln -s /usr/local/bin/mailpit /usr/sbin/sendmail
 
       - name: Run test suites
         if: success()

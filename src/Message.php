@@ -55,7 +55,7 @@ class Message
     protected array $failedRecipients = [];
 
     /**
-     * Create a new Message using $mailer for sending from SwiftMailer
+     * Create a new Message using $mailer for sending from PHPMailer
      */
     public function __construct(Manager $manager)
     {
@@ -214,7 +214,7 @@ class Message
      * associated with the address.
      *
      * @param string|array<int|string, string> $email
-     * @param string|null $name optional
+     * @param string $name optional
      *
      * @see PHPMailer::addBCC()
      */
@@ -608,8 +608,7 @@ class Message
      * - mailer:afterSend, parameters: bool $count (number of sent mails), array<int, string> $failedRecipients
      *
      * @see PHPMailer::send()
-     *
-     * @throws PHPMailerException If a critical error occurred from PHPMailer
+     * @see self::getLastError() if the return value equals to 0
      */
     public function send(): int
     {
@@ -617,14 +616,20 @@ class Message
 
         // Trigger beforeSend event and doesn't send if it returned false
         if ($eventManager && $eventManager->fire('mailer:beforeSend', $this) === false) {
-            return false;
+            return 0;
         }
 
         $this->failedRecipients = [];
         $count = 0;
 
-        // We tell PHPMailer to give us the failed recipients and number of sent mails
-        $this->message->action_function = function (bool $result, array $to) use (&$count) {
+        /**
+         * We tell PHPMailer to give us the failed recipients and number of sent mails
+         *
+         * PHPMailer asks for a string, but any callable can be set
+         * @psalm-suppress InvalidPropertyAssignmentValue
+         * @phpstan-ignore-next-line
+         */
+        $this->message->action_function = function (bool $result, array $to) use (&$count): void {
             foreach ($to as $recipient) {
                 if (!$result) {
                     $this->failedRecipients[] = $recipient[0];
@@ -634,7 +639,7 @@ class Message
             }
         };
 
-        // We don't throw an exception if PHPMailer doesn't consider it 'critical' (e.g. failed recipients)
+        // We don't throw an exception from PHPMailer but $count will equal to 0 (e.g. failed recipients for SMTP)
         try {
             $this->message->send();
         } catch (PHPMailerException $e) {
@@ -643,11 +648,6 @@ class Message
         // Trigger afterSend with number of sent mails and failed recipients
         if ($eventManager) {
             $eventManager->fire('mailer:afterSend', $this, [$count, $this->failedRecipients]);
-        }
-
-        // We throw an exception after triggering the event
-        if (isset($e) && $e->getCode() !== PHPMailer::STOP_CONTINUE) {
-            throw $e;
         }
 
         return $count;
@@ -663,6 +663,8 @@ class Message
      */
     protected function handleEmails($email): array
     {
+        $emails = [];
+
         if (is_string($email)) {
             return [$email => ''];
         }
@@ -676,7 +678,7 @@ class Message
                 }
             }
 
-            return $emails ?? [];
+            return $emails;
         }
 
         return [];
@@ -685,7 +687,7 @@ class Message
     /**
      * Flattens an array from PHPMailer to return an associative array
      *
-     * @param array<int, array{0: string, 1: string}> $emails
+     * @param array<int, array{0: string, 1: string}> $mails
      *
      * @return array<string, string>
      */
@@ -695,6 +697,7 @@ class Message
             return [];
         }
 
+        $flattenedMails = [];
         foreach ($mails as $aMail) {
             $flattenedMails[$aMail[0]] = $aMail[1];
         }
@@ -716,5 +719,13 @@ class Message
     public function getManager(): Manager
     {
         return $this->manager;
+    }
+
+    /**
+     * Return the most recent error message from PHPMailer
+     */
+    public function getLastError(): string
+    {
+        return $this->message->ErrorInfo;
     }
 }

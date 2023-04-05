@@ -16,7 +16,6 @@ namespace Phalcon\Incubator\Mailer\Tests\Functional;
 use FunctionalTester;
 use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Incubator\Mailer\Manager;
-use PHPMailer\PHPMailer\Exception;
 
 class ManagerSMTPCest extends AbstractFunctionalCest
 {
@@ -26,8 +25,8 @@ class ManagerSMTPCest extends AbstractFunctionalCest
 
         $this->config = [
             'driver'   => 'smtp',
-            'host'     => 'mailhog',
-            'port'     => '1025',
+            'host'     => $_ENV['DATA_MAILPIT_HOST_URI'],
+            'port'     => $_ENV['DATA_MAILPIT_SMTP_PORT'],
             'username' => 'example@gmail.com',
             'password' => 'your_password',
             'from'     => [
@@ -56,26 +55,24 @@ class ManagerSMTPCest extends AbstractFunctionalCest
         $I->assertSame(1, $message->send());
         $I->assertSame([], $message->getFailedRecipients());
 
-        // Get mails sent with the messages from MailHog
-        $mails = $this->getMailsFromMailHog();
+        // Get mails sent with the messages from Mailpit
+        $mails = $this->getMessages();
 
         // Check that there is one mail sent
-        $I->assertCount(1, $mails);
-        $I->assertInstanceOf('\stdClass', $mails[0]);
-
-        $mail = $mails[0];
+        $I->assertSame(1, $mails->total);
+        $mail = $mails->messages[0];
 
         $mailTo = $mail->To;
         $I->assertCount(1, $mailTo);
-        $I->assertInstanceOf('\stdClass', $mailTo[0]);
-        $I->assertSame($to, $mailTo[0]->Mailbox . '@' . $mailTo[0]->Domain);
+        $I->assertSame($to, $mailTo[0]->Address);
 
         $mailFrom = $mail->From;
-        $I->assertInstanceOf('\stdClass', $mailFrom);
-        $I->assertSame($this->config['from']['email'], $mailFrom->Mailbox . '@' . $mailFrom->Domain);
+        $I->assertSame($this->config['from']['email'], $mailFrom->Address);
+        $I->assertSame($this->config['from']['name'], $mailFrom->Name);
 
-        $I->assertSame($body . "\r\n", $mail->Content->Body);
-        $I->assertStringContainsString('Subject: ' . $subject, $mail->Raw->Data);
+        $mailMessage = $this->getMessage($mail->ID);
+        $I->assertSame($body, $mailMessage->Text);
+        $I->assertSame($subject, $mailMessage->Subject);
     }
 
     /**
@@ -85,47 +82,38 @@ class ManagerSMTPCest extends AbstractFunctionalCest
     {
         $mailer = new Manager($this->config);
 
-        // view relative to the folder viewsDir (REQUIRED)
-        $viewPath = 'mail/signup';
+        $viewPath   = 'mail/signup';
+        $viewParams = ['var1' => 'VAR VALUE 1', 'var2' => 'VAR VALUE 2'];
+        $to         = 'example_to@gmail.com';
+        $subject    = 'Hello SMTPView';
 
-        // Set variables to views (OPTIONAL)
-        $params = [
-            'var1' => 'VAR VALUE 1',
-            'var2' => 'VAR VALUE 2'
-        ];
-
-        $to      = 'example_to@gmail.com';
-        $subject = 'Hello SMTPView';
-
-        $message = $mailer->createMessageFromView($viewPath, $params)
+        $message = $mailer->createMessageFromView($viewPath, $viewParams)
             ->to($to)
             ->subject($subject);
 
         $I->assertSame(1, $message->send());
         $I->assertSame([], $message->getFailedRecipients());
 
-        // Get mails sent with the messages from MailHog
-        $mails = $this->getMailsFromMailHog();
+        // Get sent mails with the messages from Mailpit
+        $mails = $this->getMessages();
 
         // Check that there is one mail sent
-        $I->assertCount(1, $mails);
-        $I->assertInstanceOf('\stdClass', $mails[0]);
-
-        $mail = $mails[0];
+        $I->assertSame(1, $mails->total);
+        $mail = $mails->messages[0];
 
         $mailTo = $mail->To;
         $I->assertCount(1, $mailTo);
-        $I->assertInstanceOf('\stdClass', $mailTo[0]);
-        $I->assertSame($to, $mailTo[0]->Mailbox . '@' . $mailTo[0]->Domain);
+        $I->assertSame($to, $mailTo[0]->Address);
 
         $mailFrom = $mail->From;
-        $I->assertInstanceOf('\stdClass', $mailFrom);
-        $I->assertSame($this->config['from']['email'], $mailFrom->Mailbox . '@' . $mailFrom->Domain);
+        $I->assertSame($this->config['from']['email'], $mailFrom->Address);
+        $I->assertSame($this->config['from']['name'], $mailFrom->Name);
 
-        $body = $this->di->get('simple')->render($viewPath, $params);
+        $body = $this->di->get('simple')->render($viewPath, $viewParams);
 
-        $I->assertSame($body . "\r\n", $mail->Content->Body);
-        $I->assertStringContainsString('Subject: ' . $subject, $mail->Raw->Data);
+        $mailMessage = $this->getMessage($mail->ID);
+        $I->assertSame($body . "\r\n\r\n", $mailMessage->HTML);
+        $I->assertSame($subject, $mail->Subject);
     }
 
     /**
@@ -212,12 +200,15 @@ class ManagerSMTPCest extends AbstractFunctionalCest
     {
         $eventsCount = 0;
 
-        $mailer  = new Manager(array_merge($this->config, ['host' => 'mailhog-fail-recipients']));
+        $mailer  = new Manager($this->config);
         $message = $mailer->createMessage()
             ->to('example_to@gmail.com')
             ->to('example_to2@gmail.com')
             ->subject('Test subject')
             ->content('content');
+
+        // Simulate the error from PHPMailer
+        $message->getMessage()->Mailer = 'mail';
 
         $eventsManager = new EventsManager();
 
@@ -239,10 +230,11 @@ class ManagerSMTPCest extends AbstractFunctionalCest
         $I->assertSame(0, $message->send());
         $I->assertSame(1, $eventsCount);
         $I->assertSame(['example_to@gmail.com', 'example_to2@gmail.com'], $message->getFailedRecipients());
+        $I->assertNotSame('', $message->getLastError());
     }
 
     /**
-     * @test Test sending mail with SMTP errored to connect -> exception from PHPMailer
+     * @test Test sending mail with SMTP errored to connect -> 0 sent mail and a message from PHPMailer
      */
     public function mailerManagerCreateMessageSmtpAuthError(FunctionalTester $I): void
     {
@@ -253,7 +245,7 @@ class ManagerSMTPCest extends AbstractFunctionalCest
             ->subject('Test subject')
             ->content('content');
 
-        // Exception thrown by PHPMailer
-        $I->expectThrowable(Exception::class, fn () => $message->send());
+        $I->assertSame(0, $message->send());
+        $I->assertNotSame('', $message->getLastError());
     }
 }

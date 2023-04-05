@@ -7,8 +7,7 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - mailhog
-      - mailhog-fail-recipients
+      - mailpit
 
   phalcon-mailer-8.1:
     build: docker/8.1
@@ -16,23 +15,10 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - mailhog
-      - mailhog-fail-recipients
+      - mailpit
 
-  mailhog:
-    image: mailhog/mailhog
-    logging:
-      driver: 'none'
+  mailpit:
+    image: axllent/mailpit
     ports:
       - 1025:1025
       - 8025:8025
-
-  # Testing the failed recipients
-  mailhog-fail-recipients:
-    image: mailhog/mailhog
-    logging:
-      driver: 'none'
-    ports:
-      - 1026:1025
-      - 8026:8025
-    command: -invite-jim -jim-reject-recipient=1 -jim-reject-sender=0 -jim-reject-auth=0 -jim-disconnect=0 -jim-accept=1
