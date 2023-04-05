@@ -4,17 +4,22 @@ on: [push, pull_request]
 
 jobs:
   run-tests:
+    name: PHP ${{ matrix.php-versions }}
+
+    runs-on: ubuntu-latest
+    container: ubuntu
+
     services:
       mailpit:
         image: axllent/mailpit
         ports:
-          - 1025
-          - 8025
-    name: PHP ${{ matrix.php-versions }}
-    runs-on: ubuntu-latest
+          - 1025:1025
+          - 8025:8025
+
     env:
-      extensions: mbstring, intl, json, phalcon-5.2.1, xdebug
+      extensions: mbstring, intl, json, xdebug, phalcon-5.2.1
       key: cache-v0.0.2
+
     strategy:
       fail-fast: false
       matrix:
@@ -58,19 +63,17 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-suggest
 
-      - name: Install Mailpit and create a symbolic link to sendmail command
-        run: |
-          sudo bash < <(curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh)
-          ln -s /usr/local/bin/mailpit /usr/sbin/sendmail
-
       - name: Setup Tests
         run: |
           cp tests/_ci/.env.default .env
           vendor/bin/codecept build
 
+      - name: Install Mailpit and create a symbolic link to sendmail command
+        run: |
+          sudo curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh | sudo bash
+          sudo ln -s /usr/local/bin/mailpit /usr/sbin/sendmail
+
       - name: Run test suites
-        env:
-          DATA_MAILPIT_HOST_URI=localhost
         if: success()
         run: vendor/bin/codecept run --coverage-xml=coverage-${{ matrix.php-versions }}.xml
 
