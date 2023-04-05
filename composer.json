@@ -32,7 +32,6 @@
         "php": ">=7.4",
         "ext-phalcon": "^5.0",
         "ext-json": "*",
-        "swiftmailer/swiftmailer": "~6.2",
         "phpmailer/phpmailer": "^6.7"
     },
     "require-dev": {
