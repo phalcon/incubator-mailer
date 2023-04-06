@@ -131,7 +131,7 @@ class Message
      */
     public function getReplyTo(): array
     {
-        return $this->flattenMails($this->message->getReplyToAddresses());
+        return $this->flattenArray($this->message->getReplyToAddresses());
     }
 
     /**
@@ -166,7 +166,7 @@ class Message
      */
     public function getTo(): array
     {
-        return $this->flattenMails($this->message->getToAddresses());
+        return $this->flattenArray($this->message->getToAddresses());
     }
 
     /**
@@ -201,7 +201,7 @@ class Message
      */
     public function getCc(): array
     {
-        return $this->flattenMails($this->message->getCcAddresses());
+        return $this->flattenArray($this->message->getCcAddresses());
     }
 
     /**
@@ -236,7 +236,7 @@ class Message
      */
     public function getBcc(): array
     {
-        return $this->flattenMails($this->message->getBccAddresses());
+        return $this->flattenArray($this->message->getBccAddresses());
     }
 
     /**
@@ -593,6 +593,31 @@ class Message
     }
 
     /**
+     * Add a custom header to the message
+     *
+     * @param string      $name Header name
+     * @param string|null $value Header value
+     *
+     * @see PHPMailer::addCustomHeader()
+     *
+     * @throws PHPMailerException If the header is incorrect
+     */
+    public function addHeader(string $name, string $value = null): void
+    {
+        $this->message->addCustomHeader($name, $value);
+    }
+
+    /**
+     * Return all custom headers of the message (name of header -> its value)
+     *
+     * @return array<string, string>
+     */
+    public function getHeaders(): array
+    {
+        return $this->flattenArray($this->message->getCustomHeaders());
+    }
+
+    /**
      * Send the given Message like it would be sent in a mail client.
      *
      * All recipients (with the exception of Bcc) will be able to see the other
@@ -687,22 +712,22 @@ class Message
     /**
      * Flattens an array from PHPMailer to return an associative array
      *
-     * @param array<int, array{0: string, 1: string}> $mails
+     * @param array<int, array{0: string, 1: string}> $mailerArray
      *
      * @return array<string, string>
      */
-    protected function flattenMails(array $mails): array
+    protected function flattenArray(array $mailerArray): array
     {
-        if (!$mails) {
+        if (!$mailerArray) {
             return [];
         }
 
-        $flattenedMails = [];
-        foreach ($mails as $aMail) {
-            $flattenedMails[$aMail[0]] = $aMail[1];
+        $flattenedArray = [];
+        foreach ($mailerArray as $array) {
+            $flattenedArray[$array[0]] = $array[1];
         }
 
-        return $flattenedMails;
+        return $flattenedArray;
     }
 
     /**

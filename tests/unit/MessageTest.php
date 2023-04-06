@@ -46,6 +46,7 @@ class MessageTest extends AbstractUnit
         $this->assertSame('', $message->getSender());
         $this->assertSame('', $message->getSubject());
         $this->assertSame([], $message->getTo());
+        $this->assertSame([], $message->getHeaders());
     }
 
     /**
@@ -124,6 +125,13 @@ class MessageTest extends AbstractUnit
             'test2@to.com' => 'Test 2',
             'test3@to.com' => 'Name of To'
         ], $message->getTo());
+
+        // Headers
+        $message->addHeader('isTransactional', 'True');
+        $this->assertSame(['isTransactional' => 'True'], $message->getHeaders());
+
+        $message->addHeader('anotherHeader', 'valueHeader');
+        $this->assertSame(['isTransactional' => 'True', 'anotherHeader' => 'valueHeader'], $message->getHeaders());
     }
 
     /**
