@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace Phalcon\Incubator\Mailer\Tests\Functional\Manager;
 
 use FunctionalTester;
-use Phalcon\Helper\Str;
+use Phalcon\Support\HelperFactory;
 use Phalcon\Incubator\Mailer\Manager;
 use Phalcon\Di\FactoryDefault as DI;
 use Phalcon\Mvc\View;
@@ -42,12 +42,14 @@ final class ManagerSMTPCest
             ],
         ];
 
+        $helper = new HelperFactory();
+
         $this->di->set(
             'simple',
-            function () {
+            function () use ($helper) {
                 $view = new Simple();
 
-                $view->setViewsDir(Str::dirSeparator(
+                $view->setViewsDir($helper->dirSeparator(
                     codecept_data_dir() . 'fixtures/views'
                 ));
 
@@ -56,31 +58,35 @@ final class ManagerSMTPCest
             true
         );
 
-        $this->di->setShared('view', function () {
-            $view = new View();
-            $view->setDI($this);
-            $view->setViewsDir(Str::dirSeparator(
-                codecept_data_dir() . 'fixtures/views'
-            ));
+        $this->di->setShared(
+            'view',
+            function () use ($helper) {
+                $view = new View();
 
-            $view->registerEngines([
-                '.volt'  => function ($view) {
+                $view->setDI($this);
+                $view->setViewsDir($helper->dirSeparator(
+                    codecept_data_dir() . 'fixtures/views'
+                ));
 
-                    $volt = new VoltEngine($view, $this);
+                $view->registerEngines([
+                    '.volt'  => function ($view) {
 
-                    $volt->setOptions([
-                        'path'      => codecept_output_dir(),
-                        'separator' => '_'
-                    ]);
+                        $volt = new VoltEngine($view, $this);
 
-                    return $volt;
-                },
-                '.phtml' => PhpEngine::class
+                        $volt->setOptions([
+                            'path'      => codecept_output_dir(),
+                            'separator' => '_'
+                        ]);
 
-            ]);
+                        return $volt;
+                    },
+                    '.phtml' => PhpEngine::class
 
-            return $view;
-        });
+                ]);
+
+                return $view;
+            }
+        );
 
         $this->baseUrl = sprintf("%s%s:%s/api/v1/", getenv('DATA_MAILHOG_HOST_PROTOCOL'), getenv('DATA_MAILHOG_HOST_URI'), getenv('DATA_MAILHOG_API_PORT'));
     }
@@ -165,7 +171,7 @@ final class ManagerSMTPCest
         $dataMail = file_get_contents($this->baseUrl . 'messages', false, $context);
         $dataMail = \json_decode($dataMail);
 
-        //Check that there are one mail send
+        // Check that there are one mail send
         $I->assertCount(2, $dataMail);
 
         $mail = $dataMail[0];
@@ -183,6 +189,16 @@ final class ManagerSMTPCest
 
         $I->assertEquals($body, $mail->Content->Body);
         $I->assertStringContainsString('Subject: ' . $subject, $mail->Raw->Data);
+
+        // Clean emails sent from MailHog
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $this->baseUrl . 'messages');
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
+        $result     = curl_exec($ch);
+        $httpCode   = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        curl_close($ch);
+        $I->assertEquals(200, $httpCode);
     }
 
     public function mailerManagerCreateMessageWithName(FunctionalTester $I)

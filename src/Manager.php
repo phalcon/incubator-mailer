@@ -19,11 +19,10 @@
 
 namespace Phalcon\Incubator\Mailer;
 
-use Phalcon\Config;
-use Phalcon\DI\Injectable;
+use Phalcon\Di\Injectable;
 use Phalcon\Events\EventsAwareInterface;
 use Phalcon\Events\ManagerInterface;
-use Phalcon\Mvc\View;
+use Phalcon\Mvc\View\Simple;
 
 /**
  * Class Manager
@@ -42,36 +41,30 @@ use Phalcon\Mvc\View;
 class Manager extends Injectable implements EventsAwareInterface
 {
     /**
-     * @var array
+     * @var array<string, mixed>
      */
-    protected $config = [];
+    protected array $config = [];
+
+    protected \Swift_Transport $transport;
+
+    protected \Swift_Mailer $mailer;
+
+    protected ?Simple $view = null;
 
     /**
-     * @var \Swift_Transport
+     * @var array<string, string>
      */
-    protected $transport;
+    protected ?array $viewEngines = null;
 
-    /**
-     * @var \Swift_Mailer
-     */
-    protected $mailer;
-
-    /**
-     * @var \Phalcon\Mvc\View\Simple
-     */
-    protected $view;
-
-    /**
-     * @var array
-     */
-    protected $viewEngines = null;
-
-    protected $eventsManager;
+    protected ?ManagerInterface $eventsManager = null;
 
     /**
      * Create a new MailerManager component using $config for configuring
      *
-     * @param array $config
+     * @param array<string, string|array<string|int, string>> $config
+     *
+     * @throws \Phalcon\Di\Exception If a DI has not been created
+     * @throws \InvalidArgumentException If the driver has been set or not available by the manager
      */
     public function __construct(array $config)
     {
@@ -94,10 +87,8 @@ class Manager extends Injectable implements EventsAwareInterface
      * Events:
      * - mailer:beforeCreateMessage
      * - mailer:afterCreateMessage
-     *
-     * @return Message
      */
-    public function createMessage()
+    public function createMessage(): Message
     {
         $eventsManager = $this->getEventsManager();
 
@@ -109,7 +100,7 @@ class Manager extends Injectable implements EventsAwareInterface
         $message = $this->getDI()->get(
             '\Phalcon\Incubator\Mailer\Message',
             [
-                $this,
+                $this
             ]
         );
 
@@ -119,6 +110,8 @@ class Manager extends Injectable implements EventsAwareInterface
                 $from['email'],
                 isset($from['name']) ? $from['name'] : null
             );
+        } elseif (is_string($from)) {
+            $message->from($from);
         }
 
         if ($eventsManager) {
@@ -137,14 +130,12 @@ class Manager extends Injectable implements EventsAwareInterface
      * - mailer:afterCreateMessage
      *
      * @param string $view
-     * @param array $params         optional
+     * @param array<string, mixed> $params optional
      * @param null|string $viewsDir optional
-     *
-     * @return Message
      *
      * @see \Phalcon\Mailer\Manager::createMessage()
      */
-    public function createMessageFromView($view, $params = [], $viewsDir = null)
+    public function createMessageFromView(string $view, array $params = [], ?string $viewsDir = null): Message
     {
         $message = $this->createMessage();
 
@@ -158,12 +149,18 @@ class Manager extends Injectable implements EventsAwareInterface
 
     /**
      * Return a {@link \Swift_Mailer} instance
-     *
-     * @return \Swift_Mailer
      */
-    public function getSwift()
+    public function getSwift(): \Swift_Mailer
     {
         return $this->mailer;
+    }
+
+    /**
+     * Return a {@link \Swift_Transport} instance, either SMTP or Sendmail
+     */
+    public function getTransport(): \Swift_Transport
+    {
+        return $this->transport;
     }
 
     /**
@@ -171,11 +168,9 @@ class Manager extends Injectable implements EventsAwareInterface
      *
      * @param string $email
      *
-     * @return string
-     *
      * @see \Phalcon\Mailer\Manager::punycode()
      */
-    public function normalizeEmail($email)
+    public function normalizeEmail(string $email): string
     {
         if (preg_match('#[^(\x20-\x7F)]+#', $email)) {
             list($user, $domain) = explode('@', $email);
@@ -187,11 +182,11 @@ class Manager extends Injectable implements EventsAwareInterface
     }
 
     /**
-     * set value of $viewEngines
+     * Add view engines to the manager
      *
-     * @param array $engines
+     * @param array<string, string> $engines
      */
-    public function setViewEngines(array $engines)
+    public function setViewEngines(array $engines): void
     {
         $this->viewEngines = $engines;
     }
@@ -199,12 +194,12 @@ class Manager extends Injectable implements EventsAwareInterface
     /**
      * Configure MailerManager class
      *
-     * @param array $config
+     * @param array<string, mixed> $config
      *
      * @see \Phalcon\Mailer\Manager::registerSwiftTransport()
      * @see \Phalcon\Mailer\Manager::registerSwiftMailer()
      */
-    protected function configure(array $config)
+    protected function configure(array $config): void
     {
         $this->config = $config;
 
@@ -218,12 +213,18 @@ class Manager extends Injectable implements EventsAwareInterface
      * Supported driver-mail:
      * - smtp
      * - sendmail
-     * - mail
      *
+     * @throws \InvalidArgumentException If the driver is not a string value or not supported by the manager
      */
-    protected function registerSwiftTransport()
+    protected function registerSwiftTransport(): void
     {
-        switch ($driver = $this->getConfig('driver')) {
+        $driver = $this->getConfig('driver');
+
+        if (!is_string($driver)) {
+            throw new \InvalidArgumentException('Driver must be a string value set from the config');
+        }
+
+        switch ($driver) {
             case 'smtp':
                 $this->transport = $this->registerTransportSmtp();
                 break;
@@ -233,21 +234,7 @@ class Manager extends Injectable implements EventsAwareInterface
                 break;
 
             default:
-                if (is_string($driver)) {
-                    throw new \InvalidArgumentException(
-                        sprintf(
-                            'Driver-mail "%s" is not supported',
-                            $driver
-                        )
-                    );
-                } elseif (is_array($driver)) {
-                    throw new \InvalidArgumentException(
-                        sprintf(
-                            'Driver-mail "%s" is not supported',
-                            json_encode($driver)
-                        )
-                    );
-                }
+                throw new \InvalidArgumentException("Driver-mail '$driver' is not supported");
         }
     }
 
@@ -258,7 +245,7 @@ class Manager extends Injectable implements EventsAwareInterface
      *
      * @see \Swift_SmtpTransport
      */
-    protected function registerTransportSmtp()
+    protected function registerTransportSmtp(): \Swift_SmtpTransport
     {
         $config = $this->getConfig();
 
@@ -300,9 +287,9 @@ class Manager extends Injectable implements EventsAwareInterface
      * @param string $key
      * @param string $default
      *
-     * @return string|array|null
+     * @return string|array<string, mixed>|null
      */
-    protected function getConfig($key = null, $default = null)
+    protected function getConfig(?string $key = null, ?string $default = null)
     {
         if ($key !== null) {
             if (isset($this->config[$key])) {
@@ -322,12 +309,14 @@ class Manager extends Injectable implements EventsAwareInterface
      *
      * @return string
      */
-    protected function punycode($str)
+    protected function punycode(string $str): string
     {
         if (function_exists('idn_to_ascii')) {
             return idn_to_ascii($str);
         } else {
+            // @codeCoverageIgnoreStart
             return $str;
+            // @codeCoverageIgnoreEnd
         }
     }
 
@@ -338,7 +327,7 @@ class Manager extends Injectable implements EventsAwareInterface
      *
      * @see \Swift_SendmailTransport
      */
-    protected function registerTransportSendmail()
+    protected function registerTransportSendmail(): \Swift_SendmailTransport
     {
         /** @var \Swift_SendmailTransport $transport */
         $transport = $this->getDI()->get('\Swift_SendmailTransport')
@@ -357,7 +346,7 @@ class Manager extends Injectable implements EventsAwareInterface
         $this->mailer = $this->getDI()->get(
             '\Swift_Mailer',
             [
-                $this->transport,
+                $this->transport
             ]
         );
     }
@@ -371,7 +360,7 @@ class Manager extends Injectable implements EventsAwareInterface
      *
      * @return string
      */
-    protected function renderView($viewPath, $params, $viewsDir = null)
+    protected function renderView(string $viewPath, array $params, ?string $viewsDir = null): string
     {
         $view = $this->getView();
 
@@ -390,32 +379,32 @@ class Manager extends Injectable implements EventsAwareInterface
 
     /**
      * Return a {@link \Phalcon\Mvc\View\Simple} instance
-     *
-     * @return \Phalcon\Mvc\View\Simple
      */
-    protected function getView()
+    protected function getView(): Simple
     {
-        if (empty($this->view)) {
-            /** @var \Phalcon\Mvc\View $viewApp */
-            $viewApp = $this->getDI()->get('view');
-
-            if (!($viewsDir = $this->getConfig('viewsDir'))) {
-                $viewsDir = $viewApp->getViewsDir();
-            }
-
-            /** @var \Phalcon\Mvc\View\Simple $view */
-            $view = $this->getDI()->get('\Phalcon\Mvc\View\Simple');
-
-            if (is_string($viewsDir)) {
-                $view->setViewsDir($viewsDir);
-            }
-
-            if ($this->viewEngines) {
-                $view->registerEngines($this->viewEngines);
-            }
-
-            $this->view = $view;
+        if ($this->view) {
+            return $this->view;
         }
+
+        /** @var \Phalcon\Mvc\View $viewApp */
+        $viewApp = $this->getDI()->get('view');
+
+        if (!($viewsDir = $this->getConfig('viewsDir'))) {
+            $viewsDir = $viewApp->getViewsDir();
+        }
+
+        /** @var \Phalcon\Mvc\View\Simple $view */
+        $view = $this->getDI()->get('\Phalcon\Mvc\View\Simple');
+
+        if (is_string($viewsDir)) {
+            $view->setViewsDir($viewsDir);
+        }
+
+        if ($this->viewEngines) {
+            $view->registerEngines($this->viewEngines);
+        }
+
+        $this->view = $view;
 
         return $this->view;
     }
