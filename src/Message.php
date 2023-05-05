@@ -248,7 +248,8 @@ class Message
      */
     public function sender(string $email, ?string $name = null): self
     {
-        $email = $this->normalizeEmail($email);
+        $emails = $this->normalizeEmail($email);
+        $emails = is_array($email) ? $email : [$emails];
 
         if (is_string($email)) {
             $this->getMessage()->setSender($email, $name);
@@ -785,7 +786,7 @@ class Message
      *
      * @param string|array<int|string, string>|\Traversable $email
      *
-     * @return array<int|string, string>|string
+     * @return string|array
      */
     protected function normalizeEmail($email)
     {
