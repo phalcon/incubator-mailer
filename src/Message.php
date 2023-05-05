@@ -1,25 +1,27 @@
 <?php
 
 /*
-  +------------------------------------------------------------------------+
-  | Phalcon Framework                                                      |
-  +------------------------------------------------------------------------+
-  | Copyright (c) 2011-2016 Phalcon Team (https://www.phalconphp.com)      |
-  +------------------------------------------------------------------------+
-  | This source file is subject to the New BSD License that is bundled     |
-  | with this package in the file LICENSE.txt.                             |
-  |                                                                        |
-  | If you did not receive a copy of the license and are unable to         |
-  | obtain it through the world-wide-web, please send an email             |
-  | to license@phalconphp.com so we can send you a copy immediately.       |
-  +------------------------------------------------------------------------+
-  | Authors: Stanislav Kiryukhin <korsar.zn@gmail.com>                     |
-  +------------------------------------------------------------------------+
+ +------------------------------------------------------------------------+
+ | Phalcon Framework                                                      |
+ +------------------------------------------------------------------------+
+ | Copyright (c) 2011-2016 Phalcon Team (https://www.phalconphp.com)      |
+ +------------------------------------------------------------------------+
+ | This source file is subject to the New BSD License that is bundled     |
+ | with this package in the file LICENSE.txt.                             |
+ |                                                                        |
+ | If you did not receive a copy of the license and are unable to         |
+ | obtain it through the world-wide-web, please send an email             |
+ | to license@phalconphp.com so we can send you a copy immediately.       |
+ +------------------------------------------------------------------------+
+ | Authors: Stanislav Kiryukhin <korsar.zn@gmail.com>                     |
+ +------------------------------------------------------------------------+
 */
 
 namespace Phalcon\Incubator\Mailer;
 
 use Phalcon\Incubator\Mailer\Manager;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception as PHPMailerException;
 
 /**
  * Class Message
@@ -40,7 +42,10 @@ class Message
 
     protected Manager $manager;
 
-    protected ?\Swift_Message $message = null;
+    /**
+     * PHPMailer instance representing an unique message
+     */
+    protected PHPMailer $message;
 
     /**
      * An array of email which failed send to recipients.
@@ -50,34 +55,26 @@ class Message
     protected array $failedRecipients = [];
 
     /**
-     * Create a new Message using $mailer for sending from SwiftMailer
-     *
-     * @param Manager $manager
+     * Create a new Message using $mailer for sending from PHPMailer
      */
     public function __construct(Manager $manager)
     {
         $this->manager = $manager;
+
+        // we get a cloned PHPMailer to only get the config set from the manager and returned an unique 'message'
+        $this->message = clone $manager->getMailer();
     }
 
     /**
-     * Set the from address of this message.
+     * Set the unique from address of this message.
      *
-     * You may pass an array of addresses if this message is from multiple people.
-     * Example: ['receiver@domain.org', 'other@domain.org' => 'A name']
+     * If `$name` is passed, this name will be associated with the address.
      *
-     * If $name is passed and the first parameter is a string, this name will be
-     * associated with the address.
-     *
-     * @param string|array<int|string, string> $email
-     * @param string|null $name optional
-     *
-     * @see \Swift_Message::setFrom()
+     * @see PHPMailer::setFrom()
      */
-    public function from($email, $name = null): self
+    public function from(string $email, ?string $name = null): self
     {
-        $email = $this->normalizeEmail($email);
-
-        $this->getMessage()->setFrom($email, $name);
+        $this->message->setFrom($email, $name, false);
 
         return $this;
     }
@@ -85,17 +82,25 @@ class Message
     /**
      * Get the from address of this message.
      *
-     * @see \Swift_Message::getFrom()
-     *
-     * @return array<string, ?string>
+     * @see PHPMailer::From
      */
-    public function getFrom(): array
+    public function getFrom(): string
     {
-        return $this->getMessage()->getFrom();
+        return $this->message->From;
     }
 
     /**
-     * Set the reply-to address of this message.
+     * Get the name of the from adress of this message.
+     *
+     * @see PHPMailer::FromName
+     */
+    public function getFromName(): string
+    {
+        return $this->message->FromName;
+    }
+
+    /**
+     * Add reply-to addresses of this message.
      *
      * You may pass an array of addresses if replies will go to multiple people.
      * Example: ['receiver@domain.org', 'other@domain.org' => 'A name']
@@ -104,33 +109,33 @@ class Message
      * associated with the address.
      *
      * @param string|array<int|string, string> $email
-     * @param string|null $name optional
+     * @param string $name optional
      *
      * @see \Swift_Message::setReplyTo()
      */
-    public function replyTo($email, ?string $name = null): self
+    public function replyTo($email, string $name = ''): self
     {
-        $email = $this->normalizeEmail($email);
-
-        $this->getMessage()->setReplyTo($email, $name);
+        foreach ($this->handleEmails($email) as $email => $emailName) {
+            $this->message->addReplyTo($email, $emailName ?: $name);
+        }
 
         return $this;
     }
 
     /**
-     * Get the reply-to address of this message (null or array).
+     * Get the reply-to addresses (email => name) of this message.
      *
-     * @see \Swift_Message::getReplyTo()
+     * @see PHPMailer::getReplyToAddresses()
      *
-     * @return string
+     * @return array<string, string>
      */
-    public function getReplyTo()
+    public function getReplyTo(): array
     {
-        return $this->getMessage()->getReplyTo();
+        return $this->flattenArray($this->message->getReplyToAddresses());
     }
 
     /**
-     * Set the to addresses of this message.
+     * Add to addresses of this message.
      *
      * If multiple recipients will receive the message an array should be used.
      * Example: ['receiver@domain.org', 'other@domain.org' => 'A name']
@@ -139,29 +144,29 @@ class Message
      * associated with the address.
      *
      * @param string|array<int|string, string> $email
-     * @param string|null $name optional
+     * @param string $name optional
      *
-     * @see \Swift_Message::setTo()
+     * @see PHPMailer:addAddress()
      */
-    public function to($email, ?string $name = null): self
+    public function to($email, string $name = ''): self
     {
-        $email = $this->normalizeEmail($email);
-
-        $this->getMessage()->setTo($email, $name);
+        foreach ($this->handleEmails($email) as $email => $emailName) {
+            $this->message->addAddress($email, $emailName ?: $name);
+        }
 
         return $this;
     }
 
     /**
-     * Get the To addresses of this message.
+     * Get the To addresses (email => name) of this message.
      *
-     * @return array<int|string, string>
+     * @return array<string, string>
      *
-     * @see \Swift_Message::getTo()
+     * @see \PHPMailer::getToAddresses()
      */
-    public function getTo(): ?array
+    public function getTo(): array
     {
-        return $this->getMessage()->getTo();
+        return $this->flattenArray($this->message->getToAddresses());
     }
 
     /**
@@ -174,31 +179,29 @@ class Message
      * associated with the address.
      *
      * @param string|array<int|string, string> $email
-     * @param string|null $name optional
+     * @param string $name optional
      *
-     * @return $this
-     *
-     * @see \Swift_Message::setCc()
+     * @see PHPMailer::addCC()
      */
-    public function cc($email, ?string $name = null): self
+    public function cc($email, string $name = ''): self
     {
-        $email = $this->normalizeEmail($email);
-
-        $this->getMessage()->setCc($email, $name);
+        foreach ($this->handleEmails($email) as $email => $emailName) {
+            $this->message->addCC($email, $emailName ?: $name);
+        }
 
         return $this;
     }
 
     /**
-     * Get the Cc address of this message.
+     * Get the Cc address (email -> name) of this message.
      *
-     * @return ?array<int|string, string>
+     * @return array<string, string>
      *
-     * @see \Swift_Message::getCc()
+     * @see PHPMailer::getCc()
      */
-    public function getCc(): ?array
+    public function getCc(): array
     {
-        return $this->getMessage()->getCc();
+        return $this->flattenArray($this->message->getCcAddresses());
     }
 
     /**
@@ -211,29 +214,29 @@ class Message
      * associated with the address.
      *
      * @param string|array<int|string, string> $email
-     * @param string|null $name optional
+     * @param string $name optional
      *
-     * @see \Swift_Message::setBcc()
+     * @see PHPMailer::addBCC()
      */
-    public function bcc($email, ?string $name = null): self
+    public function bcc($email, string $name = ''): self
     {
-        $email = $this->normalizeEmail($email);
-
-        $this->getMessage()->setBcc($email, $name);
+        foreach ($this->handleEmails($email) as $email => $emailName) {
+            $this->message->addBCC($email, $emailName ?: $name);
+        }
 
         return $this;
     }
 
     /**
-     * Get the Bcc addresses of this message.
+     * Get the Bcc addresses (email => name) of this message.
      *
-     * @return ?array<int|string, string>
+     * @return array<string, string>
      *
-     * @see \Swift_Message::getBcc()
+     * @see PHPMailer::getBccAddresses()
      */
-    public function getBcc(): ?array
+    public function getBcc(): array
     {
-        return $this->getMessage()->getBcc();
+        return $this->flattenArray($this->message->getBccAddresses());
     }
 
     /**
@@ -242,43 +245,35 @@ class Message
      * This does not override the From field, but it has a higher significance.
      *
      * @param string $email
-     * @param string|null $name optional
+     * @param string $name optional
      *
-     * @see \Swift_Message::setSender()
+     * @see PHPMailer::setFrom()
      */
-    public function sender(string $email, ?string $name = null): self
+    public function sender(string $email, string $name = ''): self
     {
-        $email = $this->normalizeEmail($email);
-
-        if (is_string($email)) {
-            $this->getMessage()->setSender($email, $name);
-        }
+        $this->message->setFrom($email, $name);
 
         return $this;
     }
 
     /**
-     * Get the sender of this message (null or array).
+     * Get the sender of this message
      *
-     * @see \Swift_Message::getSender()
-     *
-     * @return string
+     * @see PHPMailer::Sender
      */
-    public function getSender()
+    public function getSender(): string
     {
-        return $this->getMessage()->getSender();
+        return $this->message->Sender;
     }
 
     /**
      * Set the subject of this message.
      *
-     * @param string $subject
-     *
-     * @see \Swift_Message::setSubject()
+     * @see PHPMailer::Subject
      */
     public function subject(string $subject): self
     {
-        $this->getMessage()->setSubject($subject);
+        $this->message->Subject = $subject;
 
         return $this;
     }
@@ -286,26 +281,31 @@ class Message
     /**
      * Get the subject of this message.
      *
-     * @see \Swift_Message::getSubject()
+     * @see PHPMailer::Subject
      */
     public function getSubject(): ?string
     {
-        return $this->getMessage()->getSubject();
+        return $this->message->Subject;
     }
 
     /**
-     * Set the body of this message, either as a string, or as an instance of
-     * {@link \Swift_OutputByteStream}.
+     * Set the body of this message, must be a string (in plain text or HTML)
      *
-     * @param string|\Swift_OutputByteStream $content
+     * @param string $content
      * @param string $contentType optional
-     * @param string|null $charset     optional
-     *
-     * @see \Swift_Message::setBody()
+     * @param string|null $charset optional
      */
-    public function content($content, string $contentType = self::CONTENT_TYPE_HTML, ?string $charset = null): self
-    {
-        $this->getMessage()->setBody($content, $contentType, $charset);
+    public function content(
+        string $content,
+        string $contentType = self::CONTENT_TYPE_HTML,
+        ?string $charset = null
+    ): self {
+        $this->message->ContentType = $contentType;
+        $this->message->Body        = $content;
+
+        if ($charset) {
+            $this->message->CharSet = $charset;
+        }
 
         return $this;
     }
@@ -313,11 +313,11 @@ class Message
     /**
      * Get the body of this message as a string.
      *
-     * @see \Swift_Message::getBody()
+     * @see PHPMailer::Body
      */
-    public function getContent(): ?string
+    public function getContent(): string
     {
-        return $this->getMessage()->getBody();
+        return $this->message->Body;
     }
 
     /**
@@ -329,7 +329,15 @@ class Message
      */
     public function contentAlternative(string $content, ?string $contentType = null, ?string $charset = null): self
     {
-        $this->getMessage()->addPart($content, $contentType, $charset);
+        $this->message->AltBody = $content;
+
+        if ($contentType) {
+            $this->message->ContentType = $contentType;
+        }
+
+        if ($charset) {
+            $this->message->CharSet = $charset;
+        }
 
         return $this;
     }
@@ -337,13 +345,11 @@ class Message
     /**
      * Set the Content-type of this message.
      *
-     * @param string $contentType
-     *
-     * @see \Swift_Message::setContentType()
+     * @see PHPMailer::ContentType
      */
     public function contentType(string $contentType): self
     {
-        $this->getMessage()->setContentType($contentType);
+        $this->message->ContentType = $contentType;
 
         return $this;
     }
@@ -351,13 +357,11 @@ class Message
     /**
      * Get the Content-type of this message.
      *
-     * @return string
-     *
-     * @see \Swift_Message::getContentType()
+     * @see PHPMailer::ContentType
      */
     public function getContentType(): string
     {
-        return $this->getMessage()->getContentType();
+        return $this->message->ContentType;
     }
 
     /**
@@ -365,11 +369,11 @@ class Message
      *
      * @param string $charset
      *
-     * @see \Swift_Message::setCharset()
+     * @see PHPMailer::CharSet
      */
     public function charset(string $charset): self
     {
-        $this->getMessage()->setCharset($charset);
+        $this->message->CharSet = $charset;
 
         return $this;
     }
@@ -377,13 +381,11 @@ class Message
     /**
      * Get the character set of this message.
      *
-     * @return string
-     *
-     * @see \Swift_Message::getCharset()
+     * @see PHPMailer::CharSet
      */
     public function getCharset(): string
     {
-        return $this->getMessage()->getCharset();
+        return $this->message->CharSet;
     }
 
     /**
@@ -391,15 +393,11 @@ class Message
      *
      * The value is an integer where 1 is the highest priority and 5 is the lowest.
      *
-     * @param int $priority
-     *
-     * @return $this
-     *
-     * @see \Swift_Message::setPriority()
+     * @see PHPMailer::Priority
      */
     public function priority(int $priority): self
     {
-        $this->getMessage()->setPriority($priority);
+        $this->message->Priority = $priority;
 
         return $this;
     }
@@ -410,29 +408,21 @@ class Message
      * The returned value is an integer where 1 is the highest priority and 5
      * is the lowest.
      *
-     * @return int
-     *
-     * @see \Swift_Message::getPriority()
+     * @see PHPMailer::Priority
      */
-    public function getPriority(): int
+    public function getPriority(): ?int
     {
-        return $this->getMessage()->getPriority();
+        return $this->message->Priority;
     }
 
     /**
-     * Ask for a delivery receipt from the recipient to be sent to $addresses
+     * Ask for a delivery receipt from the recipient to be sent to $email
      *
-     * @param array<int|string, string> $email
-     *
-     * @see \Swift_Message::setReadReceiptTo()
+     * @see PHPMailer::ConfirmReadingTo
      */
-    public function setReadReceiptTo(array $email): self
+    public function setReadReceiptTo(string $email): self
     {
-        $email = $this->normalizeEmail($email);
-
-        if (is_array($email)) {
-            $this->getMessage()->setReadReceiptTo($email);
-        }
+        $this->message->ConfirmReadingTo = $email;
 
         return $this;
     }
@@ -448,27 +438,23 @@ class Message
     }
 
     /**
-     * Get the addresses to which a read-receipt will be sent (null or array).
+     * Get the adresse to which a read-receipt will be sent
      *
-     * @see \Swift_Message::getReadReceiptTo()
-     *
-     * @return string
+     * @see PHPMailer::ConfirmReadingTo
      */
-    public function getReadReceiptTo()
+    public function getReadReceiptTo(): string
     {
-        return $this->getMessage()->getReadReceiptTo();
+        return $this->message->ConfirmReadingTo;
     }
 
     /**
      * Set the return-path (the bounce address) of this message.
      *
-     * @param string $email
-     *
-     * @see \Swift_Message::setReturnPath()
+     * @see PHPMailer::Sender
      */
     public function setReturnPath(string $email): self
     {
-        $this->getMessage()->setReturnPath($email);
+        $this->message->Sender = $email;
 
         return $this;
     }
@@ -476,119 +462,159 @@ class Message
     /**
      * Get the return-path (bounce address) of this message.
      *
-     * @see \Swift_Message::getReturnPath()
+     * @see PHPMailer::Sender
      */
-    public function getReturnPath(): ?string
+    public function getReturnPath(): string
     {
-        return $this->getMessage()->getReturnPath();
+        return $this->message->Sender;
     }
 
     /**
      * Set the format of this message (flowed or fixed).
      *
-     * @param string $format
-     *
-     * @see \Swift_Message::setFormat()
+     * @todo PHPMailer doesn't support flowed or fixed format
+     * @deprecated
      */
     public function setFormat(string $format): self
     {
-        $this->getMessage()->setFormat($format);
-
         return $this;
     }
 
     /**
      * Get the format of this message (i.e. flowed or fixed).
      *
-     * @see \Swift_Message::getFormat()
+     * @todo PHPMailer doesn't support flowed or fixed format
+     * @deprecated
      */
     public function getFormat(): string
     {
-        return $this->getMessage()->getFormat() ?: '';
+        return '';
     }
 
     /**
      * Attach a file to the message.
      *
      * Events:
+     *
      * - mailer:beforeAttachFile
      * - mailer:afterAttachFile
      *
-     * @param string $file
-     * @param array<string, string> $options optional
+     * @param string $file File path
+     * @param array{encoding?: string, mime?: string, as?: string} $options
      *
-     * @see Phalcon\Mailer\Message::createAttachmentViaPath()
-     * @see Phalcon\Mailer\Message::prepareAttachment()
+     * @throws PHPMailerException If the attachment has not been added from PHPMailer
+     *
+     * @see self::prepareAttachment()
      */
     public function attachment(string $file, array $options = []): self
     {
-        $attachment = $this->createAttachmentViaPath($file);
-
-        return $this->prepareAttachment($attachment, $options);
+        return $this->prepareAttachment($file, '', $options);
     }
 
     /**
      * Attach in-memory data as an attachment.
      *
-     * @param string $data
-     * @param string $name
-     * @param array<string, string> $options optional
+     * Events:
      *
-     * @see Phalcon\Mailer\Message::createAttachmentViaData()
-     * @see Phalcon\Mailer\Message::prepareAttachment()
+     * - mailer:beforeAttachFile
+     * - mailer:afterAttachFile
+     *
+     * @param string $data Source of the attachment
+     * @param string $name Name of the attachment
+     * @param array{encoding?: string, mime?: string} $options
+     *
+     * @throws PHPMailerException If the attachment has not been added from PHPMailer
+     *
+     * @see self::prepareAttachment()
      */
     public function attachmentData(string $data, string $name, array $options = []): self
     {
-        $attachment = $this->createAttachmentViaData($data, $name);
-
-        return $this->prepareAttachment($attachment, $options);
+        return $this->prepareAttachment($data, $name, $options);
     }
 
     /**
-     * Embed a file in the message and get the CID.
+     * Prepares an attachment by triggering beforeAttachFile and afterAttachFile events and adding it to the message
      *
-     * @param string $file
+     * @throws PHPMailerException If the attachment has not been added from PHPMailer
      */
-    public function embed(string $file): string
+    protected function prepareAttachment(string $source, string $name = '', array $options = []): self
     {
-        $embed = $this->createEmbedViaPath($file);
+        $eventsManager = $this->manager->getEventsManager();
 
-        return $this->getMessage()->embed($embed);
-    }
-
-    /**
-     * Embed in-memory data in the message and get the CID.
-     *
-     * @param string $data
-     * @param string $name
-     */
-    public function embedData(string $data, string $name): string
-    {
-        $embed = $this->createEmbedViaData($data, $name);
-
-        return $this->getMessage()->embed($embed);
-    }
-
-    /**
-     * Return a {@link \Swift_Message} instance
-     */
-    public function getMessage(): \Swift_Message
-    {
-        if (!$this->message) {
-            $this->message = $this->getManager()->getSwift()->createMessage();
+        // Trigger beforeAttachFile event, doesn't attach the file if it returned false
+        if ($eventsManager && $eventsManager->fire('mailer:beforeAttachFile', $this) === false) {
+            return $this;
         }
 
-        return $this->message;
+        $encoding = $options['encoding'] ?? PHPMailer::ENCODING_BASE64;
+        $type     = $options['mime'] ?? '';
+
+        // Add the attachment by file or data with encoding and type options
+        if (!$name) {
+            $this->message->addAttachment($source, $options['as'] ?? '', $encoding, $type);
+        } else {
+            $this->message->addStringAttachment($source, $name, $encoding, $type);
+        }
+
+        $attachments = $this->message->getAttachments();
+
+        // Trigger afterAttachFile event with the informations of the attachment from PHPMailer
+        if ($eventsManager) {
+            $eventsManager->fire('mailer:afterAttachFile', $this, end($attachments));
+        }
+
+        return $this;
     }
 
     /**
-     * Return a {@link \Phalcon\Incubator\Mailer\Manager} instance
+     * Embed a file in the message with the cid that you choose
      *
-     * @return \Phalcon\Incubator\Mailer\Manager
+     * @param string $file File path
+     * @param string $cid Content ID of the attachment
+     *
+     * @see PHPMailer::addEmbeddedImage()
      */
-    public function getManager(): Manager
+    public function embed(string $file, string $cid, string $filename = ''): void
     {
-        return $this->manager;
+        $this->message->addEmbeddedImage($file, $cid, $filename);
+    }
+
+    /**
+     * Embed in-memory in the message with the cid that you choose
+     *
+     * @param string $filename If you want to override the file name
+     * @param string $cid Content ID of the attachment
+     *
+     * @see PHPMailer::addStringEmbeddedImage()
+     */
+    public function embedData(string $data, string $cid, string $filename = ''): void
+    {
+        $this->message->addStringEmbeddedImage($data, $cid, $filename);
+    }
+
+    /**
+     * Add a custom header to the message
+     *
+     * @param string      $name Header name
+     * @param string|null $value Header value
+     *
+     * @see PHPMailer::addCustomHeader()
+     *
+     * @throws PHPMailerException If the header is incorrect
+     */
+    public function addHeader(string $name, string $value = null): void
+    {
+        $this->message->addCustomHeader($name, $value);
+    }
+
+    /**
+     * Return all custom headers of the message (name of header -> its value)
+     *
+     * @return array<string, string>
+     */
+    public function getHeaders(): array
+    {
+        return $this->flattenArray($this->message->getCustomHeaders());
     }
 
     /**
@@ -599,210 +625,132 @@ class Message
      *
      * Recipient/sender data will be retrieved from the Message object.
      *
-     * The return value is the number of recipients who were accepted for
-     * delivery.
+     * The return value is the number of recipients who were accepted for delivery.
      *
      * Events:
-     * - mailer:beforeSend
-     * - mailer:afterSend
      *
-     * @see \Swift_Mailer::send()
+     * - mailer:beforeSend
+     * - mailer:afterSend, parameters: bool $count (number of sent mails), array<int, string> $failedRecipients
+     *
+     * @see PHPMailer::send()
+     * @see self::getLastError() if the return value equals to 0
      */
     public function send(): int
     {
         $eventManager = $this->getManager()->getEventsManager();
 
-        if ($eventManager) {
-            $result = $eventManager->fire('mailer:beforeSend', $this);
-        } else {
-            $result = true;
-        }
-
-        if ($result === false) {
+        // Trigger beforeSend event and doesn't send if it returned false
+        if ($eventManager && $eventManager->fire('mailer:beforeSend', $this) === false) {
             return 0;
         }
 
         $this->failedRecipients = [];
+        $count = 0;
 
-        $count = $this->getManager()->getSwift()->send(
-            $this->getMessage(),
-            $this->failedRecipients
-        );
+        /**
+         * We tell PHPMailer to give us the failed recipients and number of sent mails
+         *
+         * PHPMailer asks for a string, but any callable can be set
+         * @psalm-suppress InvalidPropertyAssignmentValue
+         * @phpstan-ignore-next-line
+         */
+        $this->message->action_function = function (bool $result, array $to) use (&$count): void {
+            foreach ($to as $recipient) {
+                if (!$result) {
+                    $this->failedRecipients[] = $recipient[0];
+                } else {
+                    $count++;
+                }
+            }
+        };
 
+        // We don't throw an exception from PHPMailer but $count will equal to 0 (e.g. failed recipients for SMTP)
+        try {
+            $this->message->send();
+        } catch (PHPMailerException $e) {
+        }
+
+        // Trigger afterSend with number of sent mails and failed recipients
         if ($eventManager) {
-            $eventManager->fire(
-                'mailer:afterSend',
-                $this,
-                [
-                    $count,
-                    $this->failedRecipients
-                ]
-            );
+            $eventManager->fire('mailer:afterSend', $this, [$count, $this->failedRecipients]);
         }
 
         return $count;
     }
 
     /**
-     * Prepare and attach the given attachment.
-     *
-     * @param \Swift_Attachment $attachment
-     * @param array<string, string> $options optional
-     *
-     * @see \Swift_Message::attach()
-     */
-    protected function prepareAttachment(\Swift_Attachment $attachment, array $options = []): self
-    {
-        if (isset($options['mime'])) {
-            $attachment->setContentType($options['mime']);
-        }
-
-        if (isset($options['as'])) {
-            $attachment->setFilename($options['as']);
-        }
-
-        $eventManager = $this->getManager()->getEventsManager();
-
-        if ($eventManager) {
-            $result = $eventManager->fire(
-                'mailer:beforeAttachFile',
-                $this,
-                [
-                    $attachment,
-                ]
-            );
-        } else {
-            $result = true;
-        }
-
-        if ($result !== false) {
-            $this->getMessage()->attach($attachment);
-
-            if ($eventManager) {
-                $eventManager->fire(
-                    'mailer:afterAttachFile',
-                    $this,
-                    [
-                        $attachment,
-                    ]
-                );
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * Create a Swift new Attachment from a filesystem path.
-     *
-     * @param string $file
-     *
-     * @see \Swift_Attachment::fromPath()
-     */
-    protected function createAttachmentViaPath(string $file): \Swift_Attachment
-    {
-        /** @var \Swift_ByteStream_FileByteStream $byteStream */
-        $byteStream = $this->getManager()->getDI()->get(
-            '\Swift_ByteStream_FileByteStream',
-            [
-                $file
-            ]
-        );
-
-        /** @var \Swift_Attachment $attachment */
-        $attachment = $this->getManager()->getDI()->get('\Swift_Attachment')
-            ->setFile($byteStream);
-
-        return $attachment;
-    }
-
-    /**
-     * Create a Swift Attachment instance from data.
-     *
-     * @param string $data
-     * @param string $name optional
-     *
-     * @return \Swift_Attachment
-     *
-     * @see \Swift_Attachment::newInstance()
-     */
-    protected function createAttachmentViaData(string $data, string $name): \Swift_Attachment
-    {
-        return $this->getManager()->getDI()->get(
-            '\Swift_Attachment',
-            [
-                $data,
-                $name
-            ]
-        );
-    }
-
-    /**
-     * Create a Swift new Image from a filesystem path.
-     *
-     * @param string $file
-     *
-     * @see \Swift_Image::fromPath()
-     */
-    protected function createEmbedViaPath(string $file): \Swift_Image
-    {
-        /** @var \Swift_ByteStream_FileByteStream $byteStream */
-        $byteStream = $this->getManager()->getDI()->get(
-            '\Swift_ByteStream_FileByteStream',
-            [
-                $file
-            ]
-        );
-
-        /** @var \Swift_Image $image */
-        $image = $this->getManager()->getDI()->get('\Swift_Image')
-            ->setFile($byteStream);
-
-        return $image;
-    }
-
-    /**
-     * Create a Swift new Image.
-     *
-     * @param string $data
-     * @param string|null $name optional
-     *
-     * @see \Swift_Image::newInstance()
-     */
-    protected function createEmbedViaData(string $data, ?string $name = null): \Swift_Image
-    {
-        return $this->getManager()->getDI()->get(
-            '\Swift_Image',
-            [
-                $data,
-                $name
-            ]
-        );
-    }
-
-    /**
-     * Normalize IDN domains.
+     * Handle one or multiple emails to always return an associative array which each key
+     * is an email and its value a name or empty string if not set
      *
      * @param string|array<int|string, string>|\Traversable $email
      *
-     * @return array<int|string, string>|string
+     * @return array<string, string>
      */
-    protected function normalizeEmail($email)
+    protected function handleEmails($email): array
     {
         $emails = [];
+
+        if (is_string($email)) {
+            return [$email => ''];
+        }
 
         if (is_array($email) || $email instanceof \Traversable) {
             foreach ($email as $k => $v) {
                 if (is_int($k)) {
-                    $emails[$this->getManager()->normalizeEmail($v)] = null;
+                    $emails[$v] = '';
                 } else {
-                    $emails[$this->getManager()->normalizeEmail($k)] = $v;
+                    $emails[$k] = $v;
                 }
             }
 
             return $emails;
-        } else {
-            return $this->getManager()->normalizeEmail($email);
         }
+
+        return [];
+    }
+
+    /**
+     * Flattens an array from PHPMailer to return an associative array
+     *
+     * @param array<int, array{0: string, 1: string}> $mailerArray
+     *
+     * @return array<string, string>
+     */
+    protected function flattenArray(array $mailerArray): array
+    {
+        if (!$mailerArray) {
+            return [];
+        }
+
+        $flattenedArray = [];
+        foreach ($mailerArray as $array) {
+            $flattenedArray[$array[0]] = $array[1];
+        }
+
+        return $flattenedArray;
+    }
+
+    /**
+     * Return the PHPMailer instance representing the message
+     */
+    public function getMessage(): PHPMailer
+    {
+        return $this->message;
+    }
+
+    /**
+     * Return a {@link \Phalcon\Incubator\Mailer\Manager} instance
+     */
+    public function getManager(): Manager
+    {
+        return $this->manager;
+    }
+
+    /**
+     * Return the most recent error message from PHPMailer
+     */
+    public function getLastError(): string
+    {
+        return $this->message->ErrorInfo;
     }
 }

@@ -32,16 +32,16 @@
         "php": ">=7.4",
         "ext-phalcon": "^5.0",
         "ext-json": "*",
-        "swiftmailer/swiftmailer": "~6.2"
+        "phpmailer/phpmailer": "^6.7"
     },
     "require-dev": {
         "phalcon/ide-stubs": "^5.0",
-        "vimeo/psalm": "^4.1",
-        "squizlabs/php_codesniffer": "^3.5",
-        "codeception/codeception": "^4.1",
-        "codeception/module-asserts": "^1.0.0",
-        "phpstan/phpstan": "^0.12.18",
-        "vlucas/phpdotenv": "^2.5"
+        "vlucas/phpdotenv": "^5.5",
+        "codeception/codeception": "^4.2",
+        "codeception/module-asserts": "^2.0",
+        "vimeo/psalm": "^5.9",
+        "phpstan/phpstan": "^1.10",
+        "squizlabs/php_codesniffer": "^3.7"
     },
     "config": {
         "platform": {
@@ -55,7 +55,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Phalcon\\Incubator\\Mailer\\Tests\\Unit\\": "tests/unit/"
+            "Phalcon\\Incubator\\Mailer\\Tests\\Unit\\": "tests/unit/",
+            "Phalcon\\Incubator\\Mailer\\Tests\\Functional\\": "tests/functional/"
         }
     },
     "minimum-stability": "dev",

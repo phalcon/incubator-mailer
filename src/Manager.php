@@ -23,6 +23,7 @@ use Phalcon\Di\Injectable;
 use Phalcon\Events\EventsAwareInterface;
 use Phalcon\Events\ManagerInterface;
 use Phalcon\Mvc\View\Simple;
+use PHPMailer\PHPMailer\PHPMailer;
 
 /**
  * Class Manager
@@ -45,9 +46,7 @@ class Manager extends Injectable implements EventsAwareInterface
      */
     protected array $config = [];
 
-    protected \Swift_Transport $transport;
-
-    protected \Swift_Mailer $mailer;
+    protected PHPMailer $mailer;
 
     protected ?Simple $view = null;
 
@@ -61,14 +60,80 @@ class Manager extends Injectable implements EventsAwareInterface
     /**
      * Create a new MailerManager component using $config for configuring
      *
+     * Supported driver-mail:
+     * - smtp
+     * - sendmail
+     *
      * @param array<string, string|array<string|int, string>> $config
      *
      * @throws \Phalcon\Di\Exception If a DI has not been created
-     * @throws \InvalidArgumentException If the driver has been set or not available by the manager
+     * @throws \InvalidArgumentException If the driver has not been set or not available by the manager
      */
     public function __construct(array $config)
     {
-        $this->configure($config);
+        $this->config = $config;
+        $this->mailer = new PHPMailer(true); // throw exceptions from PHPMailer
+
+        $driver = $this->getConfig('driver');
+
+        if (!is_string($driver)) {
+            throw new \InvalidArgumentException('Driver must be a string value set from the config');
+        }
+
+        switch ($driver) {
+            case 'smtp':
+                $this->registerSmtp();
+                break;
+
+            case 'sendmail':
+                $this->registerSendmail();
+                break;
+
+            default:
+                throw new \InvalidArgumentException("Driver-mail '$driver' is not supported");
+        }
+    }
+
+    /**
+     * Set the config for mailer to use SMTP
+     */
+    protected function registerSmtp(): void
+    {
+        $config = $this->getConfig();
+
+        $this->mailer->isSMTP();
+
+        if (isset($config['host'])) {
+            $this->mailer->Host = $config['host'];
+        }
+
+        if (isset($config['port'])) {
+            $this->mailer->Port = $config['port'];
+        }
+
+        if (isset($config['encryption'])) {
+            $this->mailer->SMTPSecure = $config['encryption'];
+        }
+
+        if (isset($config['username'])) {
+            $this->mailer->Username = $config['username'];
+
+            if (isset($config['password'])) {
+                $this->mailer->Password = $config['password'];
+            }
+        }
+    }
+
+    /**
+     * Set the config for mailer to use sendmail
+     */
+    protected function registerSendmail(): void
+    {
+        $this->mailer->isSendmail();
+
+        if ($sendMailPath = $this->getConfig('sendmail')) {
+            $this->mailer->Sendmail = $sendMailPath;
+        }
     }
 
     public function getEventsManager(): ?ManagerInterface
@@ -99,12 +164,11 @@ class Manager extends Injectable implements EventsAwareInterface
         /** @var Message $message */
         $message = $this->getDI()->get(
             '\Phalcon\Incubator\Mailer\Message',
-            [
-                $this
-            ]
+            [$this]
         );
 
         $from = $this->getConfig('from');
+
         if (is_array($from)) {
             $message->from(
                 $from['email'],
@@ -148,40 +212,6 @@ class Manager extends Injectable implements EventsAwareInterface
     }
 
     /**
-     * Return a {@link \Swift_Mailer} instance
-     */
-    public function getSwift(): \Swift_Mailer
-    {
-        return $this->mailer;
-    }
-
-    /**
-     * Return a {@link \Swift_Transport} instance, either SMTP or Sendmail
-     */
-    public function getTransport(): \Swift_Transport
-    {
-        return $this->transport;
-    }
-
-    /**
-     * Normalize IDN domains.
-     *
-     * @param string $email
-     *
-     * @see \Phalcon\Mailer\Manager::punycode()
-     */
-    public function normalizeEmail(string $email): string
-    {
-        if (preg_match('#[^(\x20-\x7F)]+#', $email)) {
-            list($user, $domain) = explode('@', $email);
-
-            return $user . '@' . $this->punycode($domain);
-        } else {
-            return $email;
-        }
-    }
-
-    /**
      * Add view engines to the manager
      *
      * @param array<string, string> $engines
@@ -189,96 +219,6 @@ class Manager extends Injectable implements EventsAwareInterface
     public function setViewEngines(array $engines): void
     {
         $this->viewEngines = $engines;
-    }
-
-    /**
-     * Configure MailerManager class
-     *
-     * @param array<string, mixed> $config
-     *
-     * @see \Phalcon\Mailer\Manager::registerSwiftTransport()
-     * @see \Phalcon\Mailer\Manager::registerSwiftMailer()
-     */
-    protected function configure(array $config): void
-    {
-        $this->config = $config;
-
-        $this->registerSwiftTransport();
-        $this->registerSwiftMailer();
-    }
-
-    /**
-     * Create a new Driver-mail of SwiftTransport instance.
-     *
-     * Supported driver-mail:
-     * - smtp
-     * - sendmail
-     *
-     * @throws \InvalidArgumentException If the driver is not a string value or not supported by the manager
-     */
-    protected function registerSwiftTransport(): void
-    {
-        $driver = $this->getConfig('driver');
-
-        if (!is_string($driver)) {
-            throw new \InvalidArgumentException('Driver must be a string value set from the config');
-        }
-
-        switch ($driver) {
-            case 'smtp':
-                $this->transport = $this->registerTransportSmtp();
-                break;
-
-            case 'sendmail':
-                $this->transport = $this->registerTransportSendmail();
-                break;
-
-            default:
-                throw new \InvalidArgumentException("Driver-mail '$driver' is not supported");
-        }
-    }
-
-    /**
-     * Create a new SmtpTransport instance.
-     *
-     * @return \Swift_SmtpTransport
-     *
-     * @see \Swift_SmtpTransport
-     */
-    protected function registerTransportSmtp(): \Swift_SmtpTransport
-    {
-        $config = $this->getConfig();
-
-        /** @var \Swift_SmtpTransport $transport */
-        $transport = $this->getDI()->get('\Swift_SmtpTransport');
-
-        if (isset($config['host'])) {
-            $transport->setHost($config['host']);
-        }
-
-        if (isset($config['port'])) {
-            $transport->setPort($config['port']);
-        }
-
-        if (isset($config['encryption'])) {
-            $transport->setEncryption(
-                $config['encryption']
-            );
-        }
-
-        if (isset($config['username'])) {
-            $transport->setUsername(
-                $this->normalizeEmail(
-                    $config['username']
-                )
-            );
-
-            $transport->setPassword(
-                $config['password']
-            );
-        }
-
-        return $transport;
     }
 
     /**
@@ -300,55 +240,6 @@ class Manager extends Injectable implements EventsAwareInterface
         }
 
         return $this->config;
-    }
-
-    /**
-     * Convert UTF-8 encoded domain name to ASCII
-     *
-     * @param string $str
-     *
-     * @return string
-     */
-    protected function punycode(string $str): string
-    {
-        if (function_exists('idn_to_ascii')) {
-            return idn_to_ascii($str);
-        } else {
-            // @codeCoverageIgnoreStart
-            return $str;
-            // @codeCoverageIgnoreEnd
-        }
-    }
-
-    /**
-     * Create a new SendmailTransport instance.
-     *
-     * @return \Swift_SendmailTransport
-     *
-     * @see \Swift_SendmailTransport
-     */
-    protected function registerTransportSendmail(): \Swift_SendmailTransport
-    {
-        /** @var \Swift_SendmailTransport $transport */
-        $transport = $this->getDI()->get('\Swift_SendmailTransport')
-            ->setCommand($this->getConfig('sendmail', '/usr/sbin/sendmail -bs'));
-
-        return $transport;
-    }
-
-    /**
-     * Register SwiftMailer
-     *
-     * @see \Swift_Mailer
-     */
-    protected function registerSwiftMailer()
-    {
-        $this->mailer = $this->getDI()->get(
-            '\Swift_Mailer',
-            [
-                $this->transport
-            ]
-        );
     }
 
     /**
@@ -407,5 +298,13 @@ class Manager extends Injectable implements EventsAwareInterface
         $this->view = $view;
 
         return $this->view;
+    }
+
+    /**
+     * Returns the PHPMailer instance used to send mails
+     */
+    public function getMailer(): PHPMailer
+    {
+        return $this->mailer;
     }
 }
