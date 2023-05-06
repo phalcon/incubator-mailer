@@ -1,6 +1,14 @@
 version: '3'
 
 services:
+  phalcon-mailer-7.4:
+    build: docker/7.4
+    working_dir: /app
+    volumes:
+      - .:/app
+    depends_on:
+      - mailpit
+
   phalcon-mailer-8.0:
     build: docker/8.0
     working_dir: /app
