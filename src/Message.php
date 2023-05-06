@@ -11,7 +11,6 @@
 
 namespace Phalcon\Incubator\Mailer;
 
-use Phalcon\Incubator\Mailer\Manager;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception as PHPMailerException;
 
@@ -117,9 +116,9 @@ class Message
     /**
      * Get the reply-to addresses (email => name) of this message.
      *
+     * @return array<string, string>
      * @see PHPMailer::getReplyToAddresses()
      *
-     * @return array<string, string>
      */
     public function getReplyTo(): array
     {
@@ -286,14 +285,16 @@ class Message
      * @param string $content
      * @param string $contentType optional
      * @param string|null $charset optional
+     * @return Message
      */
     public function content(
-        string $content,
-        string $contentType = self::CONTENT_TYPE_HTML,
+        string  $content,
+        string  $contentType = self::CONTENT_TYPE_HTML,
         ?string $charset = null
-    ): self {
+    ): self
+    {
         $this->message->ContentType = $contentType;
-        $this->message->Body        = $content;
+        $this->message->Body = $content;
 
         if ($charset) {
             $this->message->CharSet = $charset;
@@ -539,7 +540,7 @@ class Message
         }
 
         $encoding = $options['encoding'] ?? PHPMailer::ENCODING_BASE64;
-        $type     = $options['mime'] ?? '';
+        $type = $options['mime'] ?? '';
 
         // Add the attachment by file or data with encoding and type options
         if (!$name) {
@@ -587,12 +588,12 @@ class Message
     /**
      * Add a custom header to the message
      *
-     * @param string      $name Header name
+     * @param string $name Header name
      * @param string|null $value Header value
      *
+     * @throws PHPMailerException If the header is incorrect
      * @see PHPMailer::addCustomHeader()
      *
-     * @throws PHPMailerException If the header is incorrect
      */
     public function addHeader(string $name, string $value = null): void
     {
