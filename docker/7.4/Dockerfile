@@ -17,18 +17,16 @@ RUN apt update -y && \
     zip
 
 # Installing PHP Extensions
-RUN pecl install phalcon-${PHALCON_VERSION} \
-    xdebug
+RUN pecl install phalcon-${PHALCON_VERSION}
 
 # Enabling PHP Extensions
 RUN docker-php-ext-enable \
     opcache \
-    phalcon \
-    xdebug
+    phalcon
 
 # Installing Mailpit
-RUN bash < <(curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh) \
-    && ln -s /usr/local/bin/mailpit /usr/sbin/sendmail
+RUN /bin/bash -c "curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh | bash" && \
+    ln -s /usr/local/bin/mailpit /usr/sbin/sendmail
 
 # Cleanup
 RUN apt autoremove -y \
