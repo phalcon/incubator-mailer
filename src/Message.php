@@ -288,11 +288,10 @@ class Message
      * @return Message
      */
     public function content(
-        string  $content,
-        string  $contentType = self::CONTENT_TYPE_HTML,
+        string $content,
+        string $contentType = self::CONTENT_TYPE_HTML,
         ?string $charset = null
-    ): self
-    {
+    ): self {
         $this->message->ContentType = $contentType;
         $this->message->Body = $content;
 
