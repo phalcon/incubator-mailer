@@ -27,7 +27,7 @@ RUN docker-php-ext-enable \
     xdebug
 
 # Installing Mailpit
-RUN sudo bash < <(curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh) \
+RUN bash < <(curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh) \
     && ln -s /usr/local/bin/mailpit /usr/sbin/sendmail
 
 # Cleanup
