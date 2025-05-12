@@ -108,6 +108,9 @@ class Manager extends Injectable implements EventsAwareInterface
         }
 
         if (isset($config['username'])) {
+
+            $this->mailer->SMTPAuth = true;
+
             $this->mailer->Username = $config['username'];
 
             if (isset($config['password'])) {
