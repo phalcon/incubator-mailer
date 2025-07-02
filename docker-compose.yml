@@ -5,7 +5,7 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - .:/app
+      - .:/app:z
     depends_on:
       - mailpit
 
@@ -15,7 +15,7 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - .:/app
+      - .:/app:z
     depends_on:
       - mailpit
 
