@@ -643,7 +643,6 @@ class Message
          * We tell PHPMailer to give us the failed recipients and number of sent mails
          *
          * PHPMailer asks for a string, but any callable can be set
-         * @psalm-suppress InvalidPropertyAssignmentValue
          * @phpstan-ignore-next-line
          */
         $this->message->action_function = function (bool $result, array $to) use (&$count): void {
@@ -659,7 +658,7 @@ class Message
         // We don't throw an exception from PHPMailer but $count will equal to 0 (e.g. failed recipients for SMTP)
         try {
             $this->message->send();
-        } catch (PHPMailerException $e) {
+        } catch (PHPMailerException) {
         }
 
         // Trigger afterSend with number of sent mails and failed recipients

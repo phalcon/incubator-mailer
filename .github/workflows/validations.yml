@@ -79,10 +79,6 @@ jobs:
       - name: Install Composer dependencies
         run: composer require --prefer-dist
 
-      - name: Run Psalm
-        if: always()
-        run: vendor/bin/psalm --show-info=false
-
       - name: Run PHPStan
         if: always()
         run: vendor/bin/phpstan analyse -l 5 src
