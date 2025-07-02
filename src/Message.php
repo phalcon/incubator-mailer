@@ -14,6 +14,11 @@ namespace Phalcon\Incubator\Mailer;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception as PHPMailerException;
 
+use function end;
+use function is_string;
+use function is_array;
+use function is_int;
+
 /**
  * Class Message
  *
@@ -31,8 +36,6 @@ class Message
      */
     public const CONTENT_TYPE_HTML = 'text/html';
 
-    protected Manager $manager;
-
     /**
      * PHPMailer instance representing an unique message
      */
@@ -48,10 +51,8 @@ class Message
     /**
      * Create a new Message using $mailer for sending from PHPMailer
      */
-    public function __construct(Manager $manager)
+    public function __construct(protected Manager $manager)
     {
-        $this->manager = $manager;
-
         // we get a cloned PHPMailer to only get the config set from the manager and returned an unique 'message'
         $this->message = clone $manager->getMailer();
     }
@@ -592,9 +593,8 @@ class Message
      *
      * @throws PHPMailerException If the header is incorrect
      * @see PHPMailer::addCustomHeader()
-     *
      */
-    public function addHeader(string $name, string $value = null): void
+    public function addHeader(string $name, ?string $value = null): void
     {
         $this->message->addCustomHeader($name, $value);
     }

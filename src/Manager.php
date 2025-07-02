@@ -17,6 +17,9 @@ use Phalcon\Events\ManagerInterface;
 use Phalcon\Mvc\View\Simple;
 use PHPMailer\PHPMailer\PHPMailer;
 
+use function is_string;
+use function is_array;
+
 /**
  * Class Manager
  *
@@ -33,11 +36,6 @@ use PHPMailer\PHPMailer\PHPMailer;
  */
 class Manager extends Injectable implements EventsAwareInterface
 {
-    /**
-     * @var array<string, mixed>
-     */
-    protected array $config = [];
-
     protected PHPMailer $mailer;
 
     protected ?Simple $view = null;
@@ -61,9 +59,8 @@ class Manager extends Injectable implements EventsAwareInterface
      * @throws \Phalcon\Di\Exception If a DI has not been created
      * @throws \InvalidArgumentException If the driver has not been set or not available by the manager
      */
-    public function __construct(array $config)
+    public function __construct(protected array $config)
     {
-        $this->config = $config;
         $this->mailer = new PHPMailer(true); // throw exceptions from PHPMailer
 
         $driver = $this->getConfig('driver');
@@ -108,9 +105,7 @@ class Manager extends Injectable implements EventsAwareInterface
         }
 
         if (isset($config['username'])) {
-
             $this->mailer->SMTPAuth = true;
-
             $this->mailer->Username = $config['username'];
 
             if (isset($config['password'])) {
