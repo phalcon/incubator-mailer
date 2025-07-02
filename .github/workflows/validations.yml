@@ -31,13 +31,13 @@ jobs:
     name: Static Code with PHP ${{ matrix.php-versions }}
     runs-on: ubuntu-latest
     env:
-      extensions: mbstring, intl, json, phalcon-5.2.1
+      extensions: mbstring, intl, json, phalcon-5.9.3
       key: cache-v0.0.2
     needs: validate-code-style
     strategy:
       fail-fast: false
       matrix:
-        php-versions: ['7.4', '8.0', '8.1']
+        php-versions: ['8.1', '8.2', '8.3', '8.4']
 
     steps:
       - name: Checkout the code
