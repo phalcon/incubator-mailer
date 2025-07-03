@@ -17,7 +17,7 @@ jobs:
           - 8025:8025
 
     env:
-      extensions: mbstring, intl, json, xdebug, phalcon-5.9.3
+      extensions: mbstring, intl, json, phalcon-5.9.3
       key: cache-v0.0.2
 
     strategy:
@@ -74,7 +74,7 @@ jobs:
 
       - name: Run test suites
         if: success()
-        run: vendor/bin/phpunit --coverage-clove =coverage-${{ matrix.php-versions }}.xml
+        run: vendor/bin/phpunit --coverage-clover coverage-${{ matrix.php-versions }}.xml
 
       - name: Upload coverage to Codecov
         if: success()
