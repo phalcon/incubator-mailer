@@ -11,17 +11,21 @@
 
 declare(strict_types=1);
 
-namespace Phalcon\Incubator\Mailer\Tests\Functional;
+namespace Phalcon\Incubator\Mailer\Tests;
 
-use FunctionalTester;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestDox;
 use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Incubator\Mailer\Manager;
 
-class ManagerSendmailCest extends AbstractFunctionalCest
+class ManagerSendmailTest extends TestCase
 {
-    public function _before(): void
+    protected array $config;
+
+    /** Setup the config for the Sendmail tests */
+    protected function setUp(): void
     {
-        parent::_before();
+        parent::setUp();
 
         $this->config = [
             'driver'    => 'sendmail',
@@ -38,10 +42,9 @@ class ManagerSendmailCest extends AbstractFunctionalCest
         ];
     }
 
-    /**
-     * @test Test sending a mail by creating a message from the manager
-     */
-    public function mailerManagerCreateMessage(FunctionalTester $I): void
+    #[Test]
+    #[TestDox('Test sending a mail by creating a message from the manager')]
+    public function mailerManagerCreateMessage(): void
     {
         $to      = 'example_to@gmail.com';
         $subject = 'Hello Sendmail';
@@ -54,34 +57,33 @@ class ManagerSendmailCest extends AbstractFunctionalCest
             ->subject($subject)
             ->content($body);
 
-        $I->assertSame(1, $message->send(), $message->getLastError());
-        $I->assertSame([], $message->getFailedRecipients());
+        $this->assertSame(1, $message->send(), $message->getLastError());
+        $this->assertSame([], $message->getFailedRecipients());
 
         // Get sent mails with the messages API
         $mails = $this->getMessages();
 
         // Asserting
-        $I->assertSame(1, $mails->total);
+        $this->assertSame(1, $mails->total);
         $mail = $mails->messages[0];
 
         $mailTo = $mail->To;
-        $I->assertCount(1, $mailTo);
-        $I->assertSame($to, $mailTo[0]->Address);
-        $I->assertSame('John Doe', $mailTo[0]->Name);
+        $this->assertCount(1, $mailTo);
+        $this->assertSame($to, $mailTo[0]->Address);
+        $this->assertSame('John Doe', $mailTo[0]->Name);
 
         $mailFrom = $mail->From;
-        $I->assertSame($this->config['from']['email'], $mailFrom->Address);
-        $I->assertSame($this->config['from']['name'], $mailFrom->Name);
+        $this->assertSame($this->config['from']['email'], $mailFrom->Address);
+        $this->assertSame($this->config['from']['name'], $mailFrom->Name);
 
         $mailMessage = $this->getMessage($mail->ID);
-        $I->assertSame($body, $mailMessage->Text);
-        $I->assertSame($subject, $mailMessage->Subject);
+        $this->assertSame($body, $mailMessage->Text);
+        $this->assertSame($subject, $mailMessage->Subject);
     }
 
-    /**
-     * @test Test sending a mail by creating a message with params from the manager
-     */
-    public function mailerManagerCreateMessageFromView(FunctionalTester $I)
+    #[Test]
+    #[TestDox('Test sending a mail by creating a message with params from the manager')]
+    public function mailerManagerCreateMessageFromView(): void
     {
         $mailer = new Manager($this->config);
 
@@ -100,42 +102,41 @@ class ManagerSendmailCest extends AbstractFunctionalCest
             ->cc($cc)
             ->subject($subject);
 
-        $I->assertSame(1, $message->send(), $message->getLastError());
+        $this->assertSame(1, $message->send(), $message->getLastError());
 
         // Get sent mails with the messages API
         $mails = $this->getMessages();
 
         // Asserting
-        $I->assertSame(1, $mails->total);
+        $this->assertSame(1, $mails->total);
         $mail = $mails->messages[0];
 
         $mailTo = $mail->To;
-        $I->assertCount(1, $mailTo);
-        $I->assertSame($to, $mailTo[0]->Address);
+        $this->assertCount(1, $mailTo);
+        $this->assertSame($to, $mailTo[0]->Address);
 
         $mailBcc = $mail->Bcc;
-        $I->assertCount(1, $mailBcc);
-        $I->assertSame($bcc, $mailBcc[0]->Address);
+        $this->assertCount(1, $mailBcc);
+        $this->assertSame($bcc, $mailBcc[0]->Address);
 
         $mailCc = $mail->Cc;
-        $I->assertCount(1, $mailCc);
-        $I->assertSame($cc, $mailCc[0]->Address);
+        $this->assertCount(1, $mailCc);
+        $this->assertSame($cc, $mailCc[0]->Address);
 
         $mailFrom = $mail->From;
-        $I->assertSame($this->config['from']['email'], $mailFrom->Address);
-        $I->assertSame($this->config['from']['name'], $mailFrom->Name);
+        $this->assertSame($this->config['from']['email'], $mailFrom->Address);
+        $this->assertSame($this->config['from']['name'], $mailFrom->Name);
 
         $mailMessage = $this->getMessage($mail->ID);
         $expectedBody = "<b>VAR VALUE 1</b><b>VAR VALUE 2</b>";
-        $I->assertSame($expectedBody . "\r\n", $mailMessage->HTML);
-        $I->assertSame($subject, $mailMessage->Subject);
-        $I->assertSame($expectedBody, $message->getContent());
+        $this->assertSame($expectedBody . "\r\n", $mailMessage->HTML);
+        $this->assertSame($subject, $mailMessage->Subject);
+        $this->assertSame($expectedBody, $message->getContent());
     }
 
-    /**
-     * @test Test sending 3 mails with an event manager set -> afterSend has 3 counts and no failedRecipients
-     */
-    public function mailerManagerCreateMessageWithEventsThreeMailsSent(FunctionalTester $I): void
+    #[Test]
+    #[TestDox('Test sending 3 mails with an event manager set -> afterSend has 3 counts and no failedRecipients')]
+    public function mailerManagerCreateMessageWithEventsThreeMailsSent(): void
     {
         $eventsCount = 0;
 
@@ -149,30 +150,26 @@ class ManagerSendmailCest extends AbstractFunctionalCest
 
         $eventsManager = new EventsManager();
 
-        $eventsManager->attach('mailer:afterSend', function ($event, $manager, $params) use ($I, &$eventsCount) {
-            $I->assertIsArray($params);
-            $I->assertCount(2, $params);
-
-            $I->assertIsInt($params[0]);
-            $I->assertSame(3, $params[0]);
-
-            $I->assertIsArray($params[1]);
-            $I->assertSame([], $params[1]);
-
+        $eventsManager->attach('mailer:afterSend', function ($event, $manager, $params) use (&$eventsCount) {
+            $this->assertIsArray($params);
+            $this->assertCount(2, $params);
+            $this->assertIsInt($params[0]);
+            $this->assertSame(3, $params[0]);
+            $this->assertIsArray($params[1]);
+            $this->assertSame([], $params[1]);
             $eventsCount++;
         });
 
         $mailer->setEventsManager($eventsManager);
 
         // Event has been triggered and asserted
-        $I->assertSame(3, $message->send(), $message->getLastError());
-        $I->assertSame(1, $eventsCount);
+        $this->assertSame(3, $message->send(), $message->getLastError());
+        $this->assertSame(1, $eventsCount);
     }
 
-    /**
-     * @test Test sending mail with sendmail errored to connect -> 0 sent mail and a message from PHPMailer
-     */
-    public function mailerManagerCreateMessageAuthError(FunctionalTester $I): void
+    #[Test]
+    #[TestDox('Test sending mail with sendmail errored to connect -> 0 sent mail and a message from PHPMailer')]
+    public function mailerManagerCreateMessageAuthError(): void
     {
         $mailer  = new Manager(array_merge($this->config, ['sendmail' => 'sendmail --smtp-addr unknown-host:1025']));
         $message = $mailer->createMessage()
@@ -181,7 +178,7 @@ class ManagerSendmailCest extends AbstractFunctionalCest
             ->subject('Test subject')
             ->content('content');
 
-        $I->assertSame(0, $message->send());
-        $I->assertNotSame('', $message->getLastError());
+        $this->assertSame(0, $message->send());
+        $this->assertNotSame('', $message->getLastError());
     }
 }
