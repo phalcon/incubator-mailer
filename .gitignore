@@ -1,3 +1,4 @@
 /vendor/
 .env
 tests/fixtures/views/mail/*.volt.php
+.phpunit.cache
