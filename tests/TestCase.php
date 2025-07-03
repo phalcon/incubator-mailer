@@ -24,6 +24,15 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
 
     protected const VIEWS_DIR = __DIR__ . '/fixtures/views';
 
+    public static function setUpBeforeClass(): void
+    {
+        if (!isset($_ENV['DATA_MAILPIT_HOST_PROTOCOL'], $_ENV['DATA_MAILPIT_HOST_URI'], $_ENV['DATA_MAILPIT_API_PORT'])) {
+            throw new LogicException(
+                'Set DATA_MAILPIT_HOST_PROTOCOL, DATA_MAILPIT_HOST_URI, and DATA_MAILPIT_API_PORT in your .env file.'
+            );
+        }
+    }
+
     /** Creates a DI and sest the URL of Mailpit and services for the Di before each test */
     protected function setUp(): void
     {
