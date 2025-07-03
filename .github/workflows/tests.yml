@@ -65,8 +65,7 @@ jobs:
 
       - name: Setup Tests
         run: |
-          cp tests/_ci/.env.default .env
-          vendor/bin/codecept build
+          cp .env.default .env
 
       - name: Install Mailpit and create a symbolic link to sendmail command
         run: |
@@ -75,7 +74,7 @@ jobs:
 
       - name: Run test suites
         if: success()
-        run: vendor/bin/codecept run --coverage-xml=coverage-${{ matrix.php-versions }}.xml
+        run: vendor/bin/phpunit --coverage-clove =coverage-${{ matrix.php-versions }}.xml
 
       - name: Upload coverage to Codecov
         if: success()
