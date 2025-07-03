@@ -64,7 +64,7 @@ class Message
      *
      * @see PHPMailer::setFrom()
      */
-    public function from(string $email, ?string $name = null): self
+    public function from(string $email, string $name = ''): self
     {
         $this->message->setFrom($email, $name, false);
 

@@ -255,7 +255,7 @@ class ManagerTest extends TestCase
         ]);
 
         $manager->setViewEngines([
-            '.volt' => fn(\Phalcon\Mvc\ViewBaseInterface $view) => new \Phalcon\Mvc\View\Engine\Volt($view, $this->di)
+            '.volt' => fn(\Phalcon\Mvc\ViewBaseInterface $view) => new \Phalcon\Mvc\View\Engine\Volt($view)
         ]);
 
         // gets the signup.volt view
