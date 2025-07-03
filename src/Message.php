@@ -14,6 +14,11 @@ namespace Phalcon\Incubator\Mailer;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception as PHPMailerException;
 
+use function end;
+use function is_string;
+use function is_int;
+use function is_iterable;
+
 /**
  * Class Message
  *
@@ -31,8 +36,6 @@ class Message
      */
     public const CONTENT_TYPE_HTML = 'text/html';
 
-    protected Manager $manager;
-
     /**
      * PHPMailer instance representing an unique message
      */
@@ -48,10 +51,8 @@ class Message
     /**
      * Create a new Message using $mailer for sending from PHPMailer
      */
-    public function __construct(Manager $manager)
+    public function __construct(protected Manager $manager)
     {
-        $this->manager = $manager;
-
         // we get a cloned PHPMailer to only get the config set from the manager and returned an unique 'message'
         $this->message = clone $manager->getMailer();
     }
@@ -104,7 +105,7 @@ class Message
      *
      * @see \Swift_Message::setReplyTo()
      */
-    public function replyTo($email, string $name = ''): self
+    public function replyTo(string|array $email, string $name = ''): self
     {
         foreach ($this->handleEmails($email) as $email => $emailName) {
             $this->message->addReplyTo($email, $emailName ?: $name);
@@ -139,7 +140,7 @@ class Message
      *
      * @see PHPMailer:addAddress()
      */
-    public function to($email, string $name = ''): self
+    public function to(string|array $email, string $name = ''): self
     {
         foreach ($this->handleEmails($email) as $email => $emailName) {
             $this->message->addAddress($email, $emailName ?: $name);
@@ -174,7 +175,7 @@ class Message
      *
      * @see PHPMailer::addCC()
      */
-    public function cc($email, string $name = ''): self
+    public function cc(string|array $email, string $name = ''): self
     {
         foreach ($this->handleEmails($email) as $email => $emailName) {
             $this->message->addCC($email, $emailName ?: $name);
@@ -209,7 +210,7 @@ class Message
      *
      * @see PHPMailer::addBCC()
      */
-    public function bcc($email, string $name = ''): self
+    public function bcc(string|array $email, string $name = ''): self
     {
         foreach ($this->handleEmails($email) as $email => $emailName) {
             $this->message->addBCC($email, $emailName ?: $name);
@@ -592,9 +593,8 @@ class Message
      *
      * @throws PHPMailerException If the header is incorrect
      * @see PHPMailer::addCustomHeader()
-     *
      */
-    public function addHeader(string $name, string $value = null): void
+    public function addHeader(string $name, ?string $value = null): void
     {
         $this->message->addCustomHeader($name, $value);
     }
@@ -643,7 +643,6 @@ class Message
          * We tell PHPMailer to give us the failed recipients and number of sent mails
          *
          * PHPMailer asks for a string, but any callable can be set
-         * @psalm-suppress InvalidPropertyAssignmentValue
          * @phpstan-ignore-next-line
          */
         $this->message->action_function = function (bool $result, array $to) use (&$count): void {
@@ -659,7 +658,7 @@ class Message
         // We don't throw an exception from PHPMailer but $count will equal to 0 (e.g. failed recipients for SMTP)
         try {
             $this->message->send();
-        } catch (PHPMailerException $e) {
+        } catch (PHPMailerException) {
         }
 
         // Trigger afterSend with number of sent mails and failed recipients
@@ -674,11 +673,11 @@ class Message
      * Handle one or multiple emails to always return an associative array which each key
      * is an email and its value a name or empty string if not set
      *
-     * @param string|array<int|string, string>|\Traversable $email
+     * @param string|array<int|string, string>|iterable $email
      *
      * @return array<string, string>
      */
-    protected function handleEmails($email): array
+    protected function handleEmails(string|iterable $email): array
     {
         $emails = [];
 
@@ -686,7 +685,7 @@ class Message
             return [$email => ''];
         }
 
-        if (is_array($email) || $email instanceof \Traversable) {
+        if (is_iterable($email)) {
             foreach ($email as $k => $v) {
                 if (is_int($k)) {
                     $emails[$v] = '';

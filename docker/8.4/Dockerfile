@@ -1,8 +1,8 @@
 FROM composer:latest as composer
-FROM php:8.0-fpm
+FROM php:8.4-cli
 
-ENV PHALCON_VERSION='5.2.1' \
-    PHP_VERSION='8.0'
+ENV PHALCON_VERSION='5.9.3' \
+    PHP_VERSION='8.4'
 
 RUN apt update -y && \
     apt install -y \
@@ -38,4 +38,4 @@ RUN apt autoremove -y \
 # Composer
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
 
-CMD ["php-fpm"]
+CMD ["php"]

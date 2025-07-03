@@ -17,15 +17,15 @@ jobs:
           - 8025:8025
 
     env:
-      extensions: mbstring, intl, json, xdebug, phalcon-5.2.1
+      extensions: mbstring, intl, json, xdebug, phalcon-5.9.3
       key: cache-v0.0.2
 
     strategy:
       fail-fast: false
       matrix:
-        php-versions: ['7.4', '8.0', '8.1']
+        php-versions: ['8.1', '8.2', '8.3', '8.4']
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
 
       - name: Setup cache environment
         id: cache-env
@@ -36,7 +36,7 @@ jobs:
           key: ${{ env.key }}
 
       - name: Cache extensions
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: ${{ steps.cache-env.outputs.dir }}
           key: ${{ steps.cache-env.outputs.key }}
@@ -54,7 +54,7 @@ jobs:
         run: echo "::set-output name=dir::$(composer config cache-files-dir)"
 
       - name: Cache composer dependencies
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}

@@ -27,8 +27,6 @@ class ManagerSMTPCest extends AbstractFunctionalCest
             'driver'   => 'smtp',
             'host'     => $_ENV['DATA_MAILPIT_HOST_URI'],
             'port'     => $_ENV['DATA_MAILPIT_SMTP_PORT'],
-            'username' => 'example@gmail.com',
-            'password' => 'your_password',
             'from'     => [
                 'email' => 'example_smtp@gmail.com',
                 'name'  => 'EXAMPLE SMTP'
@@ -52,7 +50,7 @@ class ManagerSMTPCest extends AbstractFunctionalCest
             ->subject($subject)
             ->content($body);
 
-        $I->assertSame(1, $message->send());
+        $I->assertSame(1, $message->send(), $message->getLastError());
         $I->assertSame([], $message->getFailedRecipients());
 
         // Get mails sent with the messages from Mailpit
@@ -91,7 +89,7 @@ class ManagerSMTPCest extends AbstractFunctionalCest
             ->to($to)
             ->subject($subject);
 
-        $I->assertSame(1, $message->send());
+        $I->assertSame(1, $message->send(), $message->getLastError());
         $I->assertSame([], $message->getFailedRecipients());
 
         // Get sent mails with the messages from Mailpit
@@ -152,7 +150,7 @@ class ManagerSMTPCest extends AbstractFunctionalCest
         $mailer->setEventsManager($eventsManager);
 
         // Both events have been triggered and asserted
-        $I->assertSame(1, $message->send());
+        $I->assertSame(1, $message->send(), $message->getLastError());
         $I->assertSame(2, $eventsCount);
     }
 
@@ -189,7 +187,7 @@ class ManagerSMTPCest extends AbstractFunctionalCest
         $mailer->setEventsManager($eventsManager);
 
         // Event has been triggered and asserted
-        $I->assertSame(3, $message->send());
+        $I->assertSame(3, $message->send(), $message->getLastError());
         $I->assertSame(1, $eventsCount);
     }
 
