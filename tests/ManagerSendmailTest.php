@@ -17,7 +17,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
 use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Incubator\Mailer\Manager;
+use PHPUnit\Framework\Attributes\CoversClass;
 
+#[CoversClass(Manager::class)]
 class ManagerSendmailTest extends TestCase
 {
     protected array $config;

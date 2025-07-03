@@ -21,7 +21,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPMailer\PHPMailer\Exception as PHPMailerException;
 use PHPMailer\PHPMailer\PHPMailer;
+use PHPUnit\Framework\Attributes\CoversClass;
 
+#[CoversClass(Message::class)]
 class MessageTest extends TestCase
 {
     protected const FIXTURES_DIR = __DIR__ . '/fixtures';
