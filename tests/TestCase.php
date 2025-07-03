@@ -51,20 +51,33 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
 
             return $view;
         });
+
+        $this->di->setShared(
+            'simple',
+            function () {
+                $view = new \Phalcon\Mvc\View\Simple();
+                $view->setViewsDir(self::VIEWS_DIR);
+
+                return $view;
+            }
+        );
     }
 
     /** Resets DI after each test */
     protected function tearDown(): void
     {
         \Phalcon\Di\Di::reset();
+
+        $this->cleanMailpit();
     }
 
-    /** Clean messages from MailHog */
-    protected function cleanMailhog(): void
+    /** Clean messages from Mailpit */
+    protected function cleanMailpit(): void
     {
         $ch = curl_init($this->baseUrl . 'messages');
 
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_exec($ch);
 
         curl_close($ch);
