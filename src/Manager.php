@@ -216,10 +216,8 @@ class Manager extends Injectable implements EventsAwareInterface
      *
      * @param string $key
      * @param string $default
-     *
-     * @return string|array<string, mixed>|null
      */
-    protected function getConfig(?string $key = null, ?string $default = null)
+    protected function getConfig(?string $key = null, ?string $default = null): mixed
     {
         if ($key !== null) {
             if (isset($this->config[$key])) {
@@ -238,8 +236,6 @@ class Manager extends Injectable implements EventsAwareInterface
      * @param string $viewPath
      * @param array $params
      * @param string $viewsDir
-     *
-     * @return string
      */
     protected function renderView(string $viewPath, array $params, ?string $viewsDir = null): string
     {

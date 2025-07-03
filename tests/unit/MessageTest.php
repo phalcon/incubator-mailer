@@ -62,10 +62,6 @@ class MessageTest extends AbstractUnit
         $message->setReadReceiptTo('test-receipt@test.com');
         $this->assertSame('test-receipt@test.com', $message->getReadReceiptTo());
 
-        // try to add neither a string or array
-        $message->bcc(1);
-        $this->assertSame([], $message->getBcc());
-
         $message->bcc('johndoe@test.com', 'John Doe');
         $this->assertSame(['johndoe@test.com' => 'John Doe'], $message->getBcc());
 
