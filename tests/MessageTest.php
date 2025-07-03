@@ -52,6 +52,7 @@ class MessageTest extends TestCase
         $this->assertSame('', $message->getSubject());
         $this->assertSame([], $message->getTo());
         $this->assertSame([], $message->getHeaders());
+        $this->assertSame('', $message->getLastError());
     }
 
     #[Test]

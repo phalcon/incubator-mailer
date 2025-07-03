@@ -15,12 +15,14 @@ namespace Phalcon\Incubator\Mailer\Tests;
 
 use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Incubator\Mailer\Manager;
+use Phalcon\Incubator\Mailer\Message;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
 
 #[CoversClass(Manager::class)]
-class ManagerSMTPTest extends TestCase
+#[CoversClass(Message::class)]
+class SmtpTest extends TestCase
 {
     protected array $config;
 
