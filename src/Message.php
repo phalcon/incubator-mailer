@@ -17,7 +17,6 @@ use PHPMailer\PHPMailer\Exception as PHPMailerException;
 use function end;
 use function is_string;
 use function is_int;
-use function is_iterable;
 
 /**
  * Class Message

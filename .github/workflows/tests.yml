@@ -7,7 +7,6 @@ jobs:
     name: PHP ${{ matrix.php-versions }}
 
     runs-on: ubuntu-latest
-    container: ubuntu
 
     services:
       mailpit:
@@ -26,6 +25,8 @@ jobs:
         php-versions: ['8.1', '8.2', '8.3', '8.4']
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup cache environment
         id: cache-env
@@ -66,6 +67,7 @@ jobs:
       - name: Setup Tests
         run: |
           cp .env.default .env
+          sed -i "s/DATA_MAILPIT_HOST_URI='mailpit'/DATA_MAILPIT_HOST_URI='localhost'/" .env
 
       - name: Install Mailpit and create a symbolic link to sendmail command
         run: |

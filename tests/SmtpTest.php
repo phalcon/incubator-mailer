@@ -200,9 +200,10 @@ class SmtpTest extends TestCase
             ->to('example_to2@gmail.com')
             ->subject('Test subject')
             ->content('content');
-
-        // Simulate the error from PHPMailer
-        $message->getMessage()->Mailer = 'mail';
+        
+        // Force PHPMailer to use an invalid sendmail path that will fail
+        $message->getMessage()->Mailer = 'sendmail';
+        $message->getMessage()->Sendmail = '/nonexistent/sendmail';
 
         $eventsManager = new EventsManager();
 
