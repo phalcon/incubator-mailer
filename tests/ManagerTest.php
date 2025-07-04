@@ -11,23 +11,25 @@
 
 declare(strict_types=1);
 
-namespace Phalcon\Incubator\Mailer\Tests\Unit;
+namespace Phalcon\Incubator\Mailer\Tests;
 
 use InvalidArgumentException;
-use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
 use Phalcon\Events\EventsAwareInterface;
 use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Incubator\Mailer\Manager;
 use Phalcon\Incubator\Mailer\Message;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestDox;
 
-class ManagerTest extends AbstractUnit
+#[CoversClass(Manager::class)]
+class ManagerTest extends TestCase
 {
-    /**
-     * @test Test class inheritance from Injectable and implementing EventsAwareInterface
-     */
-    public function testInheritance(): void
+    #[Test]
+    #[TestDox('Test class inheritance from Injectable and implementing EventsAwareInterface')]
+    public function inheritance(): void
     {
         $class = $this->createMock(Manager::class);
 
@@ -35,20 +37,18 @@ class ManagerTest extends AbstractUnit
         $this->assertInstanceOf(EventsAwareInterface::class, $class);
     }
 
-    /**
-     * @test Test instantiating the manager with an empty array -> exception with not a string driver
-     */
-    public function testConstructArrayEmpty(): void
+    #[Test]
+    #[TestDox('Test instantiating the manager with an empty array -> exception with not a string driver')]
+    public function constructArrayEmpty(): void
     {
         $this->expectExceptionObject(new InvalidArgumentException('Driver must be a string value set from the config'));
 
         new Manager([]);
     }
 
-    /**
-     * @test Test instantiating the manager with not a string driver -> InvalidArgumentException
-     */
-    public function testConstructDriverNotAString(): void
+    #[Test]
+    #[TestDox('Test instantiating the manager with not a string driver -> InvalidArgumentException')]
+    public function constructDriverNotAString(): void
     {
         foreach ([true, false, [], 3.14, fopen(__FILE__, 'r'), new \stdClass(), null] as $incorrectType) {
             try {
@@ -63,20 +63,18 @@ class ManagerTest extends AbstractUnit
         $this->assertSame(7, $this->getCount());
     }
 
-    /**
-     * @test Test instantiating the manager with a driver not available by the manager -> exception
-     */
-    public function testConstructDriverNotAvailable(): void
+    #[Test]
+    #[TestDox('Test instantiating the manager with a driver not available by the manager -> exception')]
+    public function constructDriverNotAvailable(): void
     {
         $this->expectExceptionObject(new InvalidArgumentException('Driver-mail \'not-driver\' is not supported'));
 
         new Manager(['driver' => 'not-driver']);
     }
 
-    /**
-     * @test Test instantiating the manager with smtp driver -> try to access methods
-     */
-    public function testSmtpCorrectImplementation(): void
+    #[Test]
+    #[TestDox('Test instantiating the manager with smtp driver -> try to access methods')]
+    public function smtpCorrectImplementation(): void
     {
         $manager = new Manager([
             'driver'        => 'smtp',
@@ -91,10 +89,9 @@ class ManagerTest extends AbstractUnit
         $this->assertSame('smtp', $manager->getMailer()->Mailer);
     }
 
-    /**
-     * @test Test instantiating the manager with sendmail driver -> try to access methods
-     */
-    public function testSendmailCorrectImplementation(): void
+    #[Test]
+    #[TestDox('Test instantiating the manager with sendmail driver -> try to access methods')]
+    public function sendmailCorrectImplementation(): void
     {
         $manager = new Manager(['driver' => 'sendmail']);
 
@@ -102,10 +99,9 @@ class ManagerTest extends AbstractUnit
         $this->assertSame('sendmail', $manager->getMailer()->Mailer);
     }
 
-    /**
-     * @test Test creating a message with the eventsManager set -> beforeCreateMessage and afterCreateMessage fired
-     */
-    public function testCreateMessageWithEventsManager(): void
+    #[Test]
+    #[TestDox('Test creating a message with the eventsManager set -> beforeCreateMessage and afterCreateMessage fired')]
+    public function createMessageWithEventsManager(): void
     {
         $mailerManager = new Manager(['driver' => 'smtp']);
 
@@ -133,10 +129,9 @@ class ManagerTest extends AbstractUnit
         $this->assertNotNull($mailerManager->getEventsManager());
     }
 
-    /**
-     * @test Test creating a message with from a string value -> from has only the email
-     */
-    public function testCreateMessageWithFromString(): void
+    #[Test]
+    #[TestDox('Test creating a message with from a string value -> from has only the email')]
+    public function createMessageWithFromString(): void
     {
         $manager = new Manager([
             'driver' => 'smtp',
@@ -149,10 +144,9 @@ class ManagerTest extends AbstractUnit
         $this->assertSame('', $message->getFromName());
     }
 
-    /**
-     * @test Test creating a message with from an array value -> from has the email and the name
-     */
-    public function testCreateMessageWithFromArray(): void
+    #[Test]
+    #[TestDox('Test creating a message with from an array value -> from has the email and the name')]
+    public function createMessageWithFromArray(): void
     {
         $manager = new Manager([
             'driver' => 'smtp',
@@ -168,11 +162,12 @@ class ManagerTest extends AbstractUnit
         $this->assertSame('John Doe', $message->getFromName());
     }
 
-    /**
-     * @test Test ::createMessageFromView() with no view service from the Di set -> exception from Di\Exception
-     */
-    public function testCreateMessageFromViewWithNoViewServiceSet(): void
+    #[Test]
+    #[TestDox('Test ::createMessageFromView() with no view service from the Di set -> exception from Di\\Exception')]
+    public function createMessageFromViewWithNoViewServiceSet(): void
     {
+        $this->di->remove('view');
+
         $manager = new Manager(['driver' => 'smtp']);
 
         $this->expectException('Phalcon\Di\Exception');
@@ -180,13 +175,10 @@ class ManagerTest extends AbstractUnit
         $manager->createMessageFromView('test');
     }
 
-    /**
-     * @test Test ::createMessageFromView() with a viewPath pointing on a non file -> exception from Mvc\View\Exception
-     */
-    public function testCreateMessageFromViewViewDoesNotExist(): void
+    #[Test]
+    #[TestDox('Test ::createMessageFromView() with a viewPath pointing on a non file -> exception from Mvc\\View\\Exception')]
+    public function createMessageFromViewViewDoesNotExist(): void
     {
-        $this->di->set('view', new \Phalcon\Mvc\View());
-
         $manager = new Manager(['driver' => 'smtp']);
 
         try {
@@ -194,35 +186,34 @@ class ManagerTest extends AbstractUnit
 
             $this->fail('Exception from Phalcon\Mvc\View\Exception should have been thrown for view not existing');
         } catch (\Phalcon\Mvc\View\Exception $e) {
-            $this->assertSame('View \'test\' was not found in the views directory', $e->getMessage());
+            $this->assertSame(
+                'View \'' . self::VIEWS_DIR . '/test\' was not found in the views directory',
+                $e->getMessage()
+            );
 
             ob_get_clean();
         }
     }
 
-    /**
-     * @test Test ::createMessageFromView() with viewsDir not set from config -> picks the dir from the view service
-     */
-    public function testCreateMessageFromViewFromConfigWithNoViewsDir(): void
+    #[Test]
+    #[TestDox('Test ::createMessageFromView() with viewsDir not set from config -> picks the dir from the view service')]
+    public function createMessageFromViewFromConfigWithNoViewsDir(): void
     {
-        $this->di->set('view', (new \Phalcon\Mvc\View())->setViewsDir(codecept_data_dir()));
-
         $manager = new Manager(['driver' => 'smtp']);
 
         // picks the view from the viewsDir of the view service from the Di
         $message = $manager->createMessageFromView(
-            'fixtures/views/mail/signup',
+            'mail/signup',
             ['var1' => 'first', 'var2' => 'second']
         );
 
         $this->assertSame('<b>first</b><b>second</b>', $message->getContent());
-        $this->assertSame(codecept_data_dir(), $this->di->get('view')->getViewsDir());
+        $this->assertSame(__DIR__ . '/fixtures/views/', $this->di->get('view')->getViewsDir());
     }
 
-    /**
-     * @test Test ::createMessageFromView() with viewsDir from the third argument -> picks this directory
-     */
-    public function testCreateMessageFromViewViewsDirArgument(): void
+    #[Test]
+    #[TestDox('Test ::createMessageFromView() with viewsDir from the third argument -> picks this directory')]
+    public function createMessageFromViewViewsDirArgument(): void
     {
         $this->di->set('view', (new \Phalcon\Mvc\View())->setViewsDir('/some/directory'));
 
@@ -230,9 +221,9 @@ class ManagerTest extends AbstractUnit
 
         // picks the view from the viewsDir of the view service from the Di
         $message = $manager->createMessageFromView(
-            'fixtures/views/mail/signup',
+            'mail/signup',
             ['var1' => 'first', 'var2' => 'second'],
-            codecept_data_dir()
+            __DIR__ . '/fixtures/views'
         );
 
         // viewsDir from the Di must not be changed
@@ -240,16 +231,13 @@ class ManagerTest extends AbstractUnit
         $this->assertSame('/some/directory/', $this->di->get('view')->getViewsDir());
     }
 
-    /**
-     * @test Test ::createMessageFromView() with viewsDir set from config with no engines -> picks a .phtml view
-     */
-    public function testCreateMessageFromViewViewsDirSetFromConfigPhtml(): void
+    #[Test]
+    #[TestDox('Test ::createMessageFromView() with viewsDir set from config with no engines -> picks a .phtml view')]
+    public function createMessageFromViewViewsDirSetFromConfigPhtml(): void
     {
-        $this->di->set('view', new \Phalcon\Mvc\View());
-
         $manager = new Manager([
             'driver'   => 'smtp',
-            'viewsDir' => codecept_data_dir('fixtures/views/')
+            'viewsDir' => __DIR__ . '/fixtures/views'
         ]);
 
         // gets the signup.phtml view
@@ -257,25 +245,17 @@ class ManagerTest extends AbstractUnit
         $this->assertSame('<b>first</b><b>second</b>', $message->getContent());
     }
 
-    /**
-     * @test Test ::createMessageFromView() with viewsDir set from config with volt engine set -> picks a .volt view
-     */
-    public function testCreateMessageFromViewViewsDirSetFromConfigVolt(): void
+    #[Test]
+    #[TestDox('Test ::createMessageFromView() with viewsDir set from config with volt engine set -> picks a .volt view')]
+    public function createMessageFromViewViewsDirSetFromConfigVolt(): void
     {
-        $this->di->set('view', new \Phalcon\Mvc\View());
-
         $manager = new Manager([
             'driver'   => 'smtp',
-            'viewsDir' => codecept_data_dir('fixtures/views/')
+            'viewsDir' => __DIR__ . '/fixtures/views'
         ]);
 
         $manager->setViewEngines([
-            '.volt' => function (\Phalcon\Mvc\View\Simple $view) {
-                $volt = new \Phalcon\Mvc\View\Engine\Volt($view);
-                $volt->setOptions(['path' => codecept_output_dir(), 'separator' => '_']);
-
-                return $volt;
-            }
+            '.volt' => fn(\Phalcon\Mvc\ViewBaseInterface $view) => new \Phalcon\Mvc\View\Engine\Volt($view)
         ]);
 
         // gets the signup.volt view
@@ -283,16 +263,13 @@ class ManagerTest extends AbstractUnit
         $this->assertSame('<b>FIRST</b><b>SECOND</b>', $message->getContent());
     }
 
-    /**
-     * @test Test ::createMessageFromView() with viewsDir set from config with volt engine set -> picks a .volt view
-     */
-    public function testCreateMessageFromViewTwoRendersDifferentViews(): void
+    #[Test]
+    #[TestDox('Test ::createMessageFromView() with viewsDir set from config with volt engine set -> picks a .volt view')]
+    public function createMessageFromViewTwoRendersDifferentViews(): void
     {
-        $this->di->set('view', new \Phalcon\Mvc\View());
-
         $manager = new Manager([
             'driver'   => 'smtp',
-            'viewsDir' => codecept_data_dir('fixtures/views/')
+            'viewsDir' => __DIR__ . '/fixtures/views'
         ]);
 
         $message = $manager->createMessageFromView('mail/signup', ['var1' => 'first', 'var2' => 'second']);

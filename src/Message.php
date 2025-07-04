@@ -64,7 +64,7 @@ class Message
      *
      * @see PHPMailer::setFrom()
      */
-    public function from(string $email, ?string $name = null): self
+    public function from(string $email, string $name = ''): self
     {
         $this->message->setFrom($email, $name, false);
 
@@ -685,19 +685,15 @@ class Message
             return [$email => ''];
         }
 
-        if (is_iterable($email)) {
-            foreach ($email as $k => $v) {
-                if (is_int($k)) {
-                    $emails[$v] = '';
-                } else {
-                    $emails[$k] = $v;
-                }
+        foreach ($email as $k => $v) {
+            if (is_int($k)) {
+                $emails[$v] = '';
+            } else {
+                $emails[$k] = $v;
             }
-
-            return $emails;
         }
 
-        return [];
+        return $emails;
     }
 
     /**

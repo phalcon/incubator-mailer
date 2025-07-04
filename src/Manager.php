@@ -162,7 +162,7 @@ class Manager extends Injectable implements EventsAwareInterface
         if (is_array($from)) {
             $message->from(
                 $from['email'],
-                isset($from['name']) ? $from['name'] : null
+                isset($from['name']) ? $from['name'] : ''
             );
         } elseif (is_string($from)) {
             $message->from($from);
