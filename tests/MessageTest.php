@@ -26,7 +26,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(Message::class)]
 class MessageTest extends TestCase
 {
-    protected const FIXTURES_DIR = __DIR__ . '/fixtures';
+    protected const FIXTURES_DIR = __DIR__ . '/_data/fixtures';
 
     #[Test]
     #[TestDox('Test instantiating the message -> try to access getters with default values')]

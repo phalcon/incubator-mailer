@@ -208,7 +208,7 @@ class ManagerTest extends TestCase
         );
 
         $this->assertSame('<b>first</b><b>second</b>', $message->getContent());
-        $this->assertSame(__DIR__ . '/fixtures/views/', $this->di->get('view')->getViewsDir());
+        $this->assertSame(self::VIEWS_DIR . '/', $this->di->get('view')->getViewsDir());
     }
 
     #[Test]
@@ -223,7 +223,7 @@ class ManagerTest extends TestCase
         $message = $manager->createMessageFromView(
             'mail/signup',
             ['var1' => 'first', 'var2' => 'second'],
-            __DIR__ . '/fixtures/views'
+            self::VIEWS_DIR
         );
 
         // viewsDir from the Di must not be changed
@@ -237,7 +237,7 @@ class ManagerTest extends TestCase
     {
         $manager = new Manager([
             'driver'   => 'smtp',
-            'viewsDir' => __DIR__ . '/fixtures/views'
+            'viewsDir' =>self::VIEWS_DIR
         ]);
 
         // gets the signup.phtml view
@@ -251,7 +251,7 @@ class ManagerTest extends TestCase
     {
         $manager = new Manager([
             'driver'   => 'smtp',
-            'viewsDir' => __DIR__ . '/fixtures/views'
+            'viewsDir' => self::VIEWS_DIR
         ]);
 
         $manager->setViewEngines([
@@ -269,7 +269,7 @@ class ManagerTest extends TestCase
     {
         $manager = new Manager([
             'driver'   => 'smtp',
-            'viewsDir' => __DIR__ . '/fixtures/views'
+            'viewsDir' => self::VIEWS_DIR
         ]);
 
         $message = $manager->createMessageFromView('mail/signup', ['var1' => 'first', 'var2' => 'second']);

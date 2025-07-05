@@ -1,0 +1,1 @@
+<b><?= strtoupper($var1) ?></b><b><?= strtoupper($var2) ?></b>
