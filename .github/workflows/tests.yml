@@ -2,6 +2,9 @@ name: "Tests"
 
 on: [push, pull_request]
 
+env:
+  EXTENSIONS: mbstring, intl, xdebug, phalcon-5.9.3
+
 jobs:
   run-tests:
     name: PHP ${{ matrix.php-versions }}
@@ -16,7 +19,6 @@ jobs:
           - 8025:8025
 
     env:
-      extensions: mbstring, intl, json, xdebug, phalcon-5.9.3
       key: cache-v0.0.2
 
     strategy:
@@ -33,7 +35,7 @@ jobs:
         uses: shivammathur/cache-extensions@v1
         with:
           php-version: ${{ matrix.php-versions }}
-          extensions: ${{ env.extensions }}
+          extensions: ${{ env.EXTENSIONS }}
           key: ${{ env.key }}
 
       - name: Cache extensions
@@ -47,7 +49,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
-          extensions: ${{ env.extensions }}
+          extensions: ${{ env.EXTENSIONS }}
           tools: pecl
 
       - name: Get Composer Cache Directory
