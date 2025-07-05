@@ -23,7 +23,7 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
     /** Base API url of Mailpit */
     protected string $baseUrl;
 
-    protected const VIEWS_DIR = __DIR__ . '/fixtures/views';
+    protected const VIEWS_DIR = __DIR__ . '/_data/fixtures/views';
 
     public static function setUpBeforeClass(): void
     {
