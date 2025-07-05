@@ -1,8 +1,9 @@
-FROM composer:latest as composer
-FROM php:8.4-cli
+ARG PHP_VERSION=8.4
 
-ENV PHALCON_VERSION='5.9.3' \
-    PHP_VERSION='8.4'
+FROM composer:latest as composer
+FROM php:${PHP_VERSION}-cli
+
+ARG PHALCON_VERSION=5.9.3
 
 RUN apt update -y && \
     apt install -y \
@@ -31,9 +32,9 @@ RUN /bin/bash -c "curl -sL https://raw.githubusercontent.com/axllent/mailpit/dev
     ln -s /usr/local/bin/mailpit /usr/sbin/sendmail
 
 # Cleanup
-RUN apt autoremove -y \
-    && apt autoclean -y \
-    && apt clean -y
+RUN apt-get autoremove -y \
+    && apt-get autoclean -y \
+    && apt-get clean -y
 
 # Composer
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer

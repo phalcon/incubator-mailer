@@ -1,6 +1,35 @@
 services:
   phalcon-mailer-8.1:
-    build: docker/8.1
+    build:
+      context: docker
+      args:
+        PHP_VERSION: 8.1
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/app:z
+    depends_on:
+      - mailpit
+
+  phalcon-mailer-8.2:
+    build:
+      context: docker
+      args:
+        PHP_VERSION: 8.2
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/app:z
+    depends_on:
+      - mailpit
+
+  phalcon-mailer-8.3:
+    build:
+      context: docker
+      args:
+        PHP_VERSION: 8.3
     working_dir: /app
     stdin_open: true
     tty: true
@@ -10,7 +39,10 @@ services:
       - mailpit
 
   phalcon-mailer-8.4:
-    build: docker/8.4
+    build:
+      context: docker
+      args:
+        PHP_VERSION: 8.4
     working_dir: /app
     stdin_open: true
     tty: true
