@@ -17,6 +17,9 @@ use Phalcon\Events\ManagerInterface;
 use Phalcon\Mvc\View\Simple;
 use PHPMailer\PHPMailer\PHPMailer;
 
+use function is_string;
+use function is_array;
+
 /**
  * Class Manager
  *
@@ -33,11 +36,6 @@ use PHPMailer\PHPMailer\PHPMailer;
  */
 class Manager extends Injectable implements EventsAwareInterface
 {
-    /**
-     * @var array<string, mixed>
-     */
-    protected array $config = [];
-
     protected PHPMailer $mailer;
 
     protected ?Simple $view = null;
@@ -61,9 +59,8 @@ class Manager extends Injectable implements EventsAwareInterface
      * @throws \Phalcon\Di\Exception If a DI has not been created
      * @throws \InvalidArgumentException If the driver has not been set or not available by the manager
      */
-    public function __construct(array $config)
+    public function __construct(protected array $config)
     {
-        $this->config = $config;
         $this->mailer = new PHPMailer(true); // throw exceptions from PHPMailer
 
         $driver = $this->getConfig('driver');
@@ -108,9 +105,7 @@ class Manager extends Injectable implements EventsAwareInterface
         }
 
         if (isset($config['username'])) {
-
             $this->mailer->SMTPAuth = true;
-
             $this->mailer->Username = $config['username'];
 
             if (isset($config['password'])) {
@@ -167,7 +162,7 @@ class Manager extends Injectable implements EventsAwareInterface
         if (is_array($from)) {
             $message->from(
                 $from['email'],
-                isset($from['name']) ? $from['name'] : null
+                isset($from['name']) ? $from['name'] : ''
             );
         } elseif (is_string($from)) {
             $message->from($from);
@@ -221,10 +216,8 @@ class Manager extends Injectable implements EventsAwareInterface
      *
      * @param string $key
      * @param string $default
-     *
-     * @return string|array<string, mixed>|null
      */
-    protected function getConfig(?string $key = null, ?string $default = null)
+    protected function getConfig(?string $key = null, ?string $default = null): mixed
     {
         if ($key !== null) {
             if (isset($this->config[$key])) {
@@ -243,8 +236,6 @@ class Manager extends Injectable implements EventsAwareInterface
      * @param string $viewPath
      * @param array $params
      * @param string $viewsDir
-     *
-     * @return string
      */
     protected function renderView(string $viewPath, array $params, ?string $viewsDir = null): string
     {

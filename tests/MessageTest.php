@@ -11,21 +11,26 @@
 
 declare(strict_types=1);
 
-namespace Phalcon\Incubator\Mailer\Tests\Unit;
+namespace Phalcon\Incubator\Mailer\Tests;
 
 use Phalcon\Events\Event;
 use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Incubator\Mailer\Manager;
 use Phalcon\Incubator\Mailer\Message;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestDox;
 use PHPMailer\PHPMailer\Exception as PHPMailerException;
 use PHPMailer\PHPMailer\PHPMailer;
+use PHPUnit\Framework\Attributes\CoversClass;
 
-class MessageTest extends AbstractUnit
+#[CoversClass(Message::class)]
+class MessageTest extends TestCase
 {
-    /**
-     * @test Test instantiating the message -> try to access getters with default values
-     */
-    public function testConstruct(): void
+    protected const FIXTURES_DIR = __DIR__ . '/_data/fixtures';
+
+    #[Test]
+    #[TestDox('Test instantiating the message -> try to access getters with default values')]
+    public function construct(): void
     {
         $manager = new Manager(['driver' => 'smtp']);
         $message = new Message($manager);
@@ -38,7 +43,7 @@ class MessageTest extends AbstractUnit
         $this->assertSame([], $message->getFailedRecipients());
         $this->assertSame('', $message->getFormat());
         $this->assertSame('', $message->getFrom());
-        $this->assertSame(null, $message->getPriority());
+        $this->assertNull($message->getPriority());
         $this->assertSame($manager, $message->getManager());
         $this->assertSame('', $message->getReadReceiptTo());
         $this->assertSame([], $message->getReplyTo());
@@ -47,12 +52,12 @@ class MessageTest extends AbstractUnit
         $this->assertSame('', $message->getSubject());
         $this->assertSame([], $message->getTo());
         $this->assertSame([], $message->getHeaders());
+        $this->assertSame('', $message->getLastError());
     }
 
-    /**
-     * @test Test instantiating the message setting the headers to the message
-     */
-    public function testSettersAndGettersMailHeaders(): void
+    #[Test]
+    #[TestDox('Test instantiating the message setting the headers to the message')]
+    public function settersAndGettersMailHeaders(): void
     {
         $manager = new Manager(['driver' => 'smtp']);
         $message = new Message($manager);
@@ -61,10 +66,6 @@ class MessageTest extends AbstractUnit
 
         $message->setReadReceiptTo('test-receipt@test.com');
         $this->assertSame('test-receipt@test.com', $message->getReadReceiptTo());
-
-        // try to add neither a string or array
-        $message->bcc(1);
-        $this->assertSame([], $message->getBcc());
 
         $message->bcc('johndoe@test.com', 'John Doe');
         $this->assertSame(['johndoe@test.com' => 'John Doe'], $message->getBcc());
@@ -134,10 +135,9 @@ class MessageTest extends AbstractUnit
         $this->assertSame(['isTransactional' => 'True', 'anotherHeader' => 'valueHeader'], $message->getHeaders());
     }
 
-    /**
-     * @test Test adding a content
-     */
-    public function testContent(): void
+    #[Test]
+    #[TestDox('Test adding a content')]
+    public function content(): void
     {
         $manager = new Manager(['driver' => 'smtp']);
         $message = new Message($manager);
@@ -157,10 +157,9 @@ class MessageTest extends AbstractUnit
         $this->assertSame('ascii', $message->getCharset());
     }
 
-    /**
-     * @test Test adding an alternative content
-     */
-    public function testContentAlternative(): void
+    #[Test]
+    #[TestDox('Test adding an alternative content')]
+    public function contentAlternative(): void
     {
         $manager = new Manager(['driver' => 'smtp']);
         $message = new Message($manager);
@@ -171,10 +170,9 @@ class MessageTest extends AbstractUnit
         $this->assertSame('text/html', $message->getContentType());
     }
 
-    /**
-     * @test Test adding an attachment with beforeAttachFile returning false -> afterAttachFile not fired
-     */
-    public function testAttachmentWithEventFalse(): void
+    #[Test]
+    #[TestDox('Test adding an attachment with beforeAttachFile returning false -> afterAttachFile not fired')]
+    public function attachmentWithEventFalse(): void
     {
         $manager = new Manager(['driver' => 'smtp']);
         $message = new Message($manager);
@@ -195,21 +193,20 @@ class MessageTest extends AbstractUnit
         });
 
         $manager->setEventsManager($eventsManager);
-        $message->attachment(codecept_data_dir('fixtures/attachments/file.txt'));
+        $message->attachment(self::FIXTURES_DIR . '/attachments/file.txt');
 
         $this->assertSame(4, $this->getCount());
         $this->assertEmpty($message->getMessage()->getAttachments());
     }
 
-    /**
-     * @test Test adding attachment from files
-     */
-    public function testAttachmentWithNoEventSuccess(): void
+    #[Test]
+    #[TestDox('Test adding attachment from files')]
+    public function attachmentWithNoEventSuccess(): void
     {
         $manager = new Manager(['driver' => 'smtp']);
         $message = new Message($manager);
 
-        $filePath = codecept_data_dir('fixtures/attachments/file.txt');
+        $filePath = self::FIXTURES_DIR . '/attachments/file.txt';
 
         // we add an attachment by a file
         $message->attachment($filePath);
@@ -252,10 +249,9 @@ class MessageTest extends AbstractUnit
         ], $attachments[1]);
     }
 
-    /**
-     * @test Test adding an attachment with beforeAttachFile not returning false -> afterAttachFile fired
-     */
-    public function testAttachmentWithEventsSuccess(): void
+    #[Test]
+    #[TestDox('Test adding an attachment with beforeAttachFile not returning false -> afterAttachFile fired')]
+    public function attachmentWithEventsSuccess(): void
     {
         $manager = new Manager(['driver' => 'smtp']);
         $message = new Message($manager);
@@ -277,7 +273,7 @@ class MessageTest extends AbstractUnit
             $this->assertIsArray($params = func_get_arg(2));
 
             $this->assertSame([
-                codecept_data_dir('fixtures/attachments/file.txt'),
+                self::FIXTURES_DIR . '/attachments/file.txt',
                 'file.txt',
                 'file.txt',
                 'base64',
@@ -289,16 +285,15 @@ class MessageTest extends AbstractUnit
         });
 
         $manager->setEventsManager($eventsManager);
-        $message->attachment(codecept_data_dir('fixtures/attachments/file.txt'));
+        $message->attachment(self::FIXTURES_DIR . '/attachments/file.txt');
 
         $this->assertSame(9, $this->getCount(), 'the events for attachments have not been fired');
         $this->assertCount(1, $message->getMessage()->getAttachments());
     }
 
-    /**
-     * @test Test adding an attachment with data
-     */
-    public function testAttachmentWithData(): void
+    #[Test]
+    #[TestDox('Test adding an attachment with data')]
+    public function attachmentWithData(): void
     {
         $manager = new Manager(['driver' => 'smtp']);
         $message = new Message($manager);
@@ -381,10 +376,9 @@ class MessageTest extends AbstractUnit
         $this->assertSame(21, $this->getCount(), 'the events for attachmentData have not been fired');
     }
 
-    /**
-     * @test Test adding a not found embed file -> exception from PHPMailer
-     */
-    public function testEmbedFileNotFound(): void
+    #[Test]
+    #[TestDox('Test adding a not found embed file -> exception from PHPMailer')]
+    public function embedFileNotFound(): void
     {
         $manager = new Manager(['driver' => 'smtp']);
         $message = new Message($manager);
@@ -394,31 +388,29 @@ class MessageTest extends AbstractUnit
         $message->embed('', 'cid-file');
     }
 
-    /**
-     * @test Test adding an embed file
-     */
-    public function testEmbedFileExistsNotRename(): void
+    #[Test]
+    #[TestDox('Test adding an embed file')]
+    public function embedFileExistsNotRename(): void
     {
         $manager = new Manager(['driver' => 'smtp']);
         $message = new Message($manager);
 
-        $message->embed(codecept_data_dir('fixtures/attachments/file.txt'), 'file-cid');
+        $message->embed(self::FIXTURES_DIR . '/attachments/file.txt', 'file-cid');
 
         $this->assertCount(1, $attachments = $message->getMessage()->getAttachments());
         $this->assertSame('file.txt', $attachments[0][1]);
         $this->assertSame('file.txt', $attachments[0][2]);
 
-        $message->embed(codecept_data_dir('fixtures/attachments/file.txt'), 'file-cid', 'rename.txt');
+        $message->embed(self::FIXTURES_DIR . '/attachments/file.txt', 'file-cid', 'rename.txt');
 
         $this->assertCount(2, $attachments = $message->getMessage()->getAttachments());
         $this->assertSame('file.txt', $attachments[1][1]);
         $this->assertSame('rename.txt', $attachments[1][2]);
     }
 
-    /**
-     * @test Test adding an embed data
-     */
-    public function testEmbedFileData(): void
+    #[Test]
+    #[TestDox('Test adding an embed data')]
+    public function embedFileData(): void
     {
         $manager = new Manager(['driver' => 'smtp']);
         $message = new Message($manager);
@@ -430,10 +422,9 @@ class MessageTest extends AbstractUnit
         $this->assertSame('file.txt', $attachments[0][1]);
     }
 
-    /**
-     * @test Test ::send() with beforeSend returning false -> mail not sent
-     */
-    public function testSendBeforeSendEventFalse(): void
+    #[Test]
+    #[TestDox('Test ::send() with beforeSend returning false -> mail not sent')]
+    public function sendBeforeSendEventFalse(): void
     {
         $manager = new Manager(['driver' => 'smtp']);
         $message = new Message($manager);

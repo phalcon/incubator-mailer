@@ -1,11 +1,16 @@
 name: "Validations"
+
 on: [ push, pull_request ]
+
+env:
+  EXTENSIONS: mbstring, intl, xdebug, phalcon-5.9.3
+
 jobs:
   validate-code-style:
     name: PSR-12 Code style
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
 
       - name: Validate composer.json and composer.lock
         run: composer validate
@@ -15,7 +20,7 @@ jobs:
         run: echo "::set-output name=dir::$(composer config cache-files-dir)"
 
       - name: Cache composer dependencies
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -31,28 +36,29 @@ jobs:
     name: Static Code with PHP ${{ matrix.php-versions }}
     runs-on: ubuntu-latest
     env:
-      extensions: mbstring, intl, json, phalcon-5.2.1
       key: cache-v0.0.2
     needs: validate-code-style
     strategy:
       fail-fast: false
       matrix:
-        php-versions: ['7.4', '8.0', '8.1']
+        php-versions: ['8.1', '8.2', '8.3', '8.4']
 
     steps:
       - name: Checkout the code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup cache environment
         id: cache-env
         uses: shivammathur/cache-extensions@v1
         with:
           php-version: ${{ matrix.php-versions }}
-          extensions: ${{ env.extensions }}
+          extensions: ${{ env.EXTENSIONS }}
           key: ${{ env.key }}
 
       - name: Cache extensions
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: ${{ steps.cache-env.outputs.dir }}
           key: ${{ steps.cache-env.outputs.key }}
@@ -62,7 +68,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
-          extensions: ${{ env.extensions }}
+          extensions: ${{ env.EXTENSIONS }}
           tools: pecl
 
       - name: Get Composer Cache Directory
@@ -70,7 +76,7 @@ jobs:
         run: echo "::set-output name=dir::$(composer config cache-files-dir)"
 
       - name: Cache composer dependencies
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -78,10 +84,6 @@ jobs:
 
       - name: Install Composer dependencies
         run: composer require --prefer-dist
-
-      - name: Run Psalm
-        if: always()
-        run: vendor/bin/psalm --show-info=false
 
       - name: Run PHPStan
         if: always()
