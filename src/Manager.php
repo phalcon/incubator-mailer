@@ -277,9 +277,7 @@ class Manager extends Injectable implements EventsAwareInterface
             $view->setViewsDir($viewsDir);
         }
 
-        if ($this->viewEngines) {
-            $view->registerEngines($this->viewEngines);
-        }
+        $view->registerEngines($this->viewEngines ?: $viewApp->getRegisteredEngines());
 
         $this->view = $view;
 
